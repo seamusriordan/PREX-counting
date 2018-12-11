@@ -24,9 +24,9 @@ find_library(Podd_LIBRARY
   )
 if(Podd_LIBRARY)
   ## Get the path to the library
+
   get_filename_component(Podd_path ${Podd_LIBRARY} PATH)
   set(Podd_find_filenames VmeModule.h THaAnalysisObject.h)
-
   ## Ensure that we have the appropriate include directories
   foreach(Podd_filename ${Podd_find_filenames})
     find_path(_Podd_include_${Podd_filename}
