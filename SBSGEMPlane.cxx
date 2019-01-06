@@ -1,8 +1,9 @@
 #include <iostream>
-
 #include "SBSGEMPlane.h"
 #include "TDatime.h"
 #include "THaEvData.h"
+
+const int APVMAP[128] = {1, 33, 65, 97, 9, 41, 73, 105, 17, 49, 81, 113, 25, 57, 89, 121, 3, 35, 67, 99, 11, 43, 75, 107, 19, 51, 83, 115, 27, 59, 91, 123, 5, 37, 69, 101, 13, 45, 77, 109, 21, 53, 85, 117, 29, 61, 93, 125, 7, 39, 71, 103, 15, 47, 79, 111, 23, 55, 87, 119, 31, 63, 95, 127, 0, 32, 64, 96, 8, 40, 72, 104, 16, 48, 80, 112, 24, 56, 88, 120, 2, 34, 66, 98, 10, 42, 74, 106, 18, 50, 82, 114, 26, 58, 90, 122, 4, 36, 68, 100, 12, 44, 76, 108, 20, 52, 84, 116, 28, 60, 92, 124, 6, 38, 70, 102, 14, 46, 78, 110, 22, 54, 86, 118, 30, 62, 94, 126};
 
 
 SBSGEMPlane::SBSGEMPlane( const char *name, const char *description,
@@ -143,6 +144,7 @@ Int_t SBSGEMPlane::DefineVariables( EMode mode ) {
           { "adc3", "Strip number mapping", "fadc3" },
           { "adc4", "Strip number mapping", "fadc4" },
           { "adc5", "Strip number mapping", "fadc5" },
+          { "adc_sum", "Strip number mapping", "fadc_sum" },
           { 0 },
       };
 
@@ -193,10 +195,13 @@ Int_t   SBSGEMPlane::Decode( const THaEvData& evdata ){
                 
                 // Madness....   copy pasted from stand alone decoder
                 // I bet there's a more elegant way to express this
-                Int_t RstripNb= 32*(strip%4)+ 8*(int)(strip/4)- 31*(int)(strip/16);
-                RstripNb=RstripNb+1+RstripNb%4-5*(((int)(RstripNb/4))%2);
-                RstripNb=RstripNb+(127-2*RstripNb)*it->invert;
 
+                // Int_t RstripNb= 32*(strip%4)+ 8*(int)(strip/4)- 31*(int)(strip/16);
+                // RstripNb=RstripNb+1+RstripNb%4-5*(((int)(RstripNb/4))%2);
+	      
+	        // New: Use a pre-computed array from Danning to skip the above two steps.
+		Int_t RstripNb = APVMAP[strip];
+                RstripNb=RstripNb+(127-2*RstripNb)*it->invert;
                 Int_t RstripPos = RstripNb + 128*it->pos;
 
 /*

@@ -56,6 +56,7 @@ class SBSGEMPlane : public THaSubDetector {
         Int_t *fadc3; // [fNch]
         Int_t *fadc4; // [fNch]
         Int_t *fadc5; // [fNch]
+	Int_t *fadc_sum; //[fNch]
         Double_t *fPedestal; 
         Double_t *fRMS; 
 
