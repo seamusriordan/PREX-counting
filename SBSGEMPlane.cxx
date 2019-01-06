@@ -15,11 +15,11 @@ SBSGEMPlane::SBSGEMPlane( const char *name, const char *description,
     fZeroSuppress    = kFALSE;
     fZeroSuppressRMS = 5.0;
 
-        for( Int_t i = 0; i < N_MPD_TIME_SAMP; i++ ){
-            fadc[i] = NULL;
-        }
-
-        return;
+    for( Int_t i = 0; i < N_MPD_TIME_SAMP; i++ ){
+      fadc[i] = NULL;
+    }
+    fadc_sum = NULL;
+    return;
 }
 
 SBSGEMPlane::~SBSGEMPlane() {
@@ -30,7 +30,7 @@ SBSGEMPlane::~SBSGEMPlane() {
         fadc3 = NULL;
         fadc4 = NULL;
         fadc5 = NULL;
-
+	fadc_sum = NULL;
         for( Int_t i = 0; i < N_MPD_TIME_SAMP; i++ ){
             delete fadc[i];
             fadc[i] = NULL;
@@ -82,8 +82,7 @@ Int_t SBSGEMPlane::ReadDatabase( const TDatime& date ){
 
     // FIXME:  make sure to delete if already initialized
     fStrip    = new Int_t [N_APV25_CHAN*nentry];
-
-
+    
     for( Int_t i = 0; i < N_MPD_TIME_SAMP; i++ ){
         fadc[i] = new Int_t [N_APV25_CHAN*nentry];
         for( Int_t j = 0; j < N_MPD_TIME_SAMP; j++ ){
@@ -96,6 +95,8 @@ Int_t SBSGEMPlane::ReadDatabase( const TDatime& date ){
     fadc3 = fadc[3];
     fadc4 = fadc[4];
     fadc5 = fadc[5];
+
+    fadc_sum = new Int_t[N_APV25_CHAN*nentry];
 
     fPedestal = new Double_t [N_APV25_CHAN*nentry];
     fRMS      = new Double_t [N_APV25_CHAN*nentry];
@@ -211,8 +212,8 @@ Int_t   SBSGEMPlane::Decode( const THaEvData& evdata ){
 */
 
                 fStrip[fNch] = RstripPos;
-
-
+		
+		fadc_sum[fNch] = 0;
 
                 for( Int_t adc_samp = 0; adc_samp < N_MPD_TIME_SAMP; adc_samp++ ){
                     int isamp = adc_samp*N_APV25_CHAN + strip;
@@ -221,7 +222,7 @@ Int_t   SBSGEMPlane::Decode( const THaEvData& evdata ){
 
                     fadc[adc_samp][fNch] =  evdata.GetData(it->crate, it->slot, chan, isamp) -
                                             fPedestal[RstripPos];
-
+		    fadc_sum[fNch] += fadc[adc_samp][fNch];
                     assert( ((UInt_t) fNch) < fMPDmap.size()*N_APV25_CHAN );
                 }
 

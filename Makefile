@@ -189,7 +189,8 @@ $(COREDICT).cxx: $(HDR) $(LINKDEF)
 	$(ROOTDICT_CMD) -f $@ $(ROOTDICT_CMD_FLAGS) -c $(INCLUDES) $(DEFINES) $^ ;
 
 install:	all
-		$(error Please define install yourself)
+		cp *.so $(SBS_LIBDIR)
+#		$(error Please define install yourself)
 # for example:
 #		cp $(USERLIB) $(LIBDIR)
 
