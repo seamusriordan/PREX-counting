@@ -100,22 +100,23 @@ Int_t SBSGEMPlane::ReadDatabase( const TDatime& date ){
 
     fPedestal = new Double_t [N_APV25_CHAN*nentry];
     fRMS      = new Double_t [N_APV25_CHAN*nentry];
+
     for( Int_t i = 0; i < N_APV25_CHAN*nentry; i++ ){
-        // FIXME needs to read in pedestal map
-        fPedestal[i] = 0.0;
-        fRMS[i] = 0.0;
+      fPedestal[i] = 0.0;
+      fRMS[i] = 0.0;
     }
+
 
     for( UInt_t i = 0; i < rawped.size(); i++ ){
         if( (i % 2) == 1 ) continue;
         int idx = (int) rawped[i];
 	
-	if( idx < N_APV25_CHAN*nentry ){
-		fPedestal[idx] = rawped[i+1];
-	} else {
+    	if( idx < N_APV25_CHAN*nentry ){
+    		fPedestal[idx] = rawped[i+1];
+    	} else {
 		
-	    std::cout << "[SBSGEMPlane::ReadDatabase]  WARNING: " << " strip " << idx  << " listed but not enough strips in cratemap" << std::endl;
-	}
+    	    std::cout << "[SBSGEMPlane::ReadDatabase]  WARNING: " << " strip " << idx  << " listed but not enough strips in cratemap" << std::endl;
+    	}
     }
 
     for( UInt_t i = 0; i < rawrms.size(); i++ ){
@@ -139,13 +140,13 @@ Int_t SBSGEMPlane::DefineVariables( EMode mode ) {
       RVarDef vars[] = {
           { "nch",   "Number of channels",   "fNch" },
           { "strip", "Strip number mapping", "fStrip" },
-          { "adc0", "Strip number mapping", "fadc0" },
-          { "adc1", "Strip number mapping", "fadc1" },
-          { "adc2", "Strip number mapping", "fadc2" },
-          { "adc3", "Strip number mapping", "fadc3" },
-          { "adc4", "Strip number mapping", "fadc4" },
-          { "adc5", "Strip number mapping", "fadc5" },
-          { "adc_sum", "Strip number mapping", "fadc_sum" },
+          { "adc0", "ADC sample", "fadc0" },
+          { "adc1", "ADC sample", "fadc1" },
+          { "adc2", "ADC sample", "fadc2" },
+          { "adc3", "ADC sample", "fadc3" },
+          { "adc4", "ADC sample", "fadc4" },
+          { "adc5", "ADC sample", "fadc5" },
+          { "adc_sum", "ADC samples sum", "fadc_sum" },
           { 0 },
       };
 
