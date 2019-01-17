@@ -216,7 +216,7 @@ Int_t   SBSGEMPlane::Decode( const THaEvData& evdata ){
                 fStrip[fNch] = RstripPos;
 		
 		fadc_sum[fNch] = 0;
-
+		
                 for( Int_t adc_samp = 0; adc_samp < N_MPD_TIME_SAMP; adc_samp++ ){
                     int isamp = adc_samp*N_APV25_CHAN + strip;
 
@@ -251,14 +251,16 @@ Int_t   SBSGEMPlane::Decode( const THaEvData& evdata ){
 	      }
 	      arrADCSum[j+1] = swap_buff;
 	    }
-	    // Average the channels with lower signals
+	    // Average the channels with middle 1/3 signals
 	    Double_t cm_noise = 0;
-	    for(Int_t strip =0; strip<N_CMN_CHAN;++strip){
-	      if(arrADCSum[strip+1]<arrADCSum[strip])
+	    Int_t n_cmn = N_APV25_CHAN/3;
+	    for(Int_t strip =n_cmn; strip<2*n_cmn;++strip){
+	      if(arrADCSum[strip+1]<arrADCSum[strip]) // Unless N_CMN_CHAN !=128
 		std::cout << "Sorting went Wrong ! " << std::endl;
 	      cm_noise += arrADCSum[strip];
 	    }
-	    cm_noise = cm_noise/ N_CMN_CHAN / N_MPD_TIME_SAMP; // averaged to each sample
+	    cm_noise = cm_noise/ n_cmn / N_MPD_TIME_SAMP; // averaged to each sample
+
 	    // Write to fcommon_mode[fNch] array
 	    for(Int_t strip=0; strip<N_APV25_CHAN;++strip){
 	      fcommon_mode[ arrfNch[strip] ] = cm_noise;  
