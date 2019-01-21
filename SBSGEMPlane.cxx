@@ -6,7 +6,8 @@
 SBSGEMPlane::SBSGEMPlane( const char *name, const char *description,
     THaDetectorBase* parent ):
     THaSubDetector(name,description,parent),
-    fNch(0),fStrip(NULL),fPedestal(NULL)
+    fNch(0),fStrip(NULL),fPedestal(NULL),fcommon_mode(NULL),
+    coarse_time1(-1),coarse_time2(-1),fine_time(-1)
 {
     // FIXME:  To database
     fZeroSuppress    = kFALSE;
@@ -32,10 +33,13 @@ SBSGEMPlane::~SBSGEMPlane() {
             delete fadc[i];
             fadc[i] = NULL;
         }
+	delete fcommon_mode;
+	fcommon_mode = NULL;
         delete fPedestal;
         fPedestal = NULL;
         delete fStrip;
         fStrip = NULL;
+	
     }
 
     return;
@@ -146,6 +150,9 @@ Int_t SBSGEMPlane::DefineVariables( EMode mode ) {
           { "adc5", "ADC sample", "fadc5" },
           { "adc_sum", "ADC samples sum", "fadc_sum" },
           { "common_mode", "Common Mode", "fcommon_mode" },
+	  { "fine_time", "Fine Trigger Time", "fine_time" },
+	  { "coarse_time1", "Coarse Trigger Time 1", "coarse_time1" },
+	  { "coarse_time2", "Coarse Trigger Time 2", "coarse_time2" },
           { 0 },
       };
 
@@ -171,7 +178,19 @@ Int_t   SBSGEMPlane::Decode( const THaEvData& evdata ){
 
     fNch = 0;
     for (std::vector<mpdmap_t>::iterator it = fMPDmap.begin() ; it != fMPDmap.end(); ++it){
-        Int_t effChan = it->mpd_id << 8 | it->adc_id;
+
+        // Find trigger time channel first
+        Int_t effChan = it->mpd_id << 5 ; // fine trigger time
+	fine_time = evdata.GetData(it->crate,it->slot,effChan,0);
+
+	effChan = it->mpd_id << 6 ; // coarse trigger time1	
+	coarse_time1 = evdata.GetData(it->crate,it->slot,effChan,0);
+
+	effChan = it->mpd_id << 7 ; // coarse trigger time2
+	coarse_time2 = evdata.GetData(it->crate,it->slot,effChan,0);
+
+	// Start reading data sample
+        effChan = it->mpd_id << 8 | it->adc_id;
         // Find channel for this crate/slot
 
         Int_t nchan = evdata.GetNumChan( it->crate, it->slot );

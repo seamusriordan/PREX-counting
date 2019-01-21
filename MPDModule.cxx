@@ -70,6 +70,10 @@ namespace Decoder {
 
       UInt_t data_count = 0;
 
+
+      // Variables for trigger times
+      Int_t trigger_time;
+
       //  v5 decoder
       
       int ii,jj,kk,ll;
@@ -84,7 +88,7 @@ namespace Decoder {
           //printf("=    CRATE   %d   ======    SLOT   %d   =======================================\n", fCrate, fSlot);
           //printf("BLOCK HEADER  %06x\n", thesewords);
           //printf("Good? (0)       %x\n", (thesewords & 0xe00000) >> 21);
-          //printf("Module ID       %d\n", (thesewords & 0x1F0000) >> 16 );
+          // printf("Module ID       %d\n", (thesewords & 0x1F0000) >> 16 );
           //printf("EVENT_PER_BLOCK %d\n", (thesewords & 0x00FF00) >> 8 );
           //printf("BLOCK COUNT     %d\n", (thesewords & 0x0000FF) >> 0);
 
@@ -112,6 +116,12 @@ namespace Decoder {
               //printf("TRIGGER TIME 1%06x\n", thesewords);
               //printf("Good? (6)       %x\n", (thesewords & 0xF00000) >> 20);
               //printf("COURSE TIME     %d\n", (thesewords & 0x0FFFFF) >> 0);
+	      
+	      trigger_time = (thesewords & 0x0FFFFF) >> 0;
+	      effCh  = (mpdID)<< 6;
+	      status = sldat->loadData("adc",effCh,trigger_time,trigger_time);
+	      if( status != SD_OK ) return -1;
+	      
               if( (thesewords & 0xF00000) >> 20 != 0x6 ){
                   fprintf(stderr, "[ERROR  MPDModule::LoadSlot, line %d] TRIGGER TIME 1 WORD NOT FOUND\n", __LINE__);
                   return -1;
@@ -121,10 +131,17 @@ namespace Decoder {
               //printf("TRIGGER TIME 2%06x\n", thesewords);
               //printf("Good? (7)       %x\n", (thesewords & 0xF00000) >> 20);
               //printf("COURSE TIME     %d\n", (thesewords & 0x0FFFFF) >> 0);
+	      
+	      trigger_time = (thesewords & 0x0FFFFF) >> 0;
+	      effCh  = (mpdID)<< 7;
+	      status = sldat->loadData("adc",effCh,trigger_time,trigger_time);
+	      if( status != SD_OK ) return -1;
+	      
               if( (thesewords & 0xF00000) >> 20 != 0x7 ){
                   fprintf(stderr, "[ERROR  MPDModule::LoadSlot, line %d] TRIGGER TIME 2 WORD NOT FOUND\n", __LINE__);
                   return -1;
               }
+
 
               kk = 0;
               while( ((p[jj] & 0xE00000) >> 21 ) == 0x4  ){
@@ -199,6 +216,12 @@ namespace Decoder {
               //printf("Good? (a)       %x\n", (thesewords & 0xF00000) >> 20);
               //printf("N WORDS IN EVT  %d\n", (thesewords & 0x0FFF00) >> 8);
               //printf("FINE TRIGGER T  %d\n", (thesewords & 0x0000FF) >> 0);
+	      
+	      trigger_time = (thesewords & 0x0000FF) >> 0;
+	      effCh = (mpdID)<< 5;
+	      status = sldat->loadData("adc",effCh,trigger_time,trigger_time);
+	      if( status != SD_OK ) return -1;
+		
               if( (thesewords & 0xF00000) >> 20 != 0xa ){
                   fprintf(stderr, "[ERROR  MPDModule::LoadSlot, line %d] EVENT TRAILER NOT FOUND\n", __LINE__);
                   return -1;
