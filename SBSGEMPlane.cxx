@@ -179,16 +179,12 @@ Int_t   SBSGEMPlane::Decode( const THaEvData& evdata ){
     fNch = 0;
     for (std::vector<mpdmap_t>::iterator it = fMPDmap.begin() ; it != fMPDmap.end(); ++it){
 
-        // Find trigger time channel first
-        Int_t effChan = it->mpd_id << 5 ; // fine trigger time
-	fine_time = evdata.GetData(it->crate,it->slot,effChan,0);
-
-	effChan = it->mpd_id << 6 ; // coarse trigger time1	
+        // Find channel for trigger time first
+      Int_t effChan = it->mpd_id << 5 ;  // Channel reserved for trigger time
 	coarse_time1 = evdata.GetData(it->crate,it->slot,effChan,0);
-
-	effChan = it->mpd_id << 7 ; // coarse trigger time2
-	coarse_time2 = evdata.GetData(it->crate,it->slot,effChan,0);
-
+	coarse_time2 = evdata.GetData(it->crate,it->slot,effChan,1);
+	fine_time = evdata.GetData(it->crate,it->slot,effChan,2);
+	
 	// Start reading data sample
         effChan = it->mpd_id << 8 | it->adc_id;
         // Find channel for this crate/slot
