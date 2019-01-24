@@ -65,6 +65,7 @@ class SBSGEMPlane : public THaSubDetector {
         Int_t coarse_time1;
         Int_t coarse_time2;
         Int_t fine_time;
+        Int_t ev_num;
   
         ClassDef(SBSGEMPlane,0)
 

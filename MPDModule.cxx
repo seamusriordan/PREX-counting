@@ -111,6 +111,11 @@ namespace Decoder {
                   fprintf(stderr, "[ERROR  MPDModule::LoadSlot, line %d] EVENT HEADER NOT FOUND\n", __LINE__);
                   return -1;
               }
+	      
+	      Int_t event_num = (thesewords & 0x0FFFFF);
+	      Int_t effCh_evnum = (mpdID)<<4;
+	      status = sldat->loadData("adc",effCh_evnum,event_num,event_num);
+	      if( status != SD_OK ) return -1;
 
               thesewords = p[jj++] & 0xFFFFFF;
               // printf("TRIGGER TIME 1%06x\n", thesewords);

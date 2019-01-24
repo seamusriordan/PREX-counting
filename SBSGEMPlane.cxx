@@ -7,7 +7,7 @@ SBSGEMPlane::SBSGEMPlane( const char *name, const char *description,
     THaDetectorBase* parent ):
     THaSubDetector(name,description,parent),
     fNch(0),fStrip(NULL),fPedestal(NULL),fcommon_mode(NULL),
-    coarse_time1(-1),coarse_time2(-1),fine_time(-1)
+    coarse_time1(-1),coarse_time2(-1),fine_time(-1),ev_num(-1)
 {
     // FIXME:  To database
     fZeroSuppress    = kFALSE;
@@ -153,6 +153,7 @@ Int_t SBSGEMPlane::DefineVariables( EMode mode ) {
 	  { "fine_time", "Fine Trigger Time", "fine_time" },
 	  { "coarse_time1", "Coarse Trigger Time 1", "coarse_time1" },
 	  { "coarse_time2", "Coarse Trigger Time 2", "coarse_time2" },
+	  { "ev_num","event counter","ev_num"},
           { 0 },
       };
 
@@ -184,6 +185,9 @@ Int_t   SBSGEMPlane::Decode( const THaEvData& evdata ){
 	coarse_time1 = evdata.GetData(it->crate,it->slot,effChan,0);
 	coarse_time2 = evdata.GetData(it->crate,it->slot,effChan,1);
 	fine_time = evdata.GetData(it->crate,it->slot,effChan,2);
+
+	effChan = it->mpd_id<<4;
+	ev_num = evdata.GetData(it->crate,it->slot,effChan,0);
 	
 	// Start reading data sample
         effChan = it->mpd_id << 8 | it->adc_id;
