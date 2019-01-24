@@ -7,7 +7,7 @@ SBSGEMPlane::SBSGEMPlane( const char *name, const char *description,
     THaDetectorBase* parent ):
     THaSubDetector(name,description,parent),
     fNch(0),fStrip(NULL),fPedestal(NULL),fcommon_mode(NULL),
-    coarse_time1(-1),coarse_time2(-1),fine_time(-1),ev_num(-1)
+    trigger_time(-1),ev_num(-1)
 {
     // FIXME:  To database
     fZeroSuppress    = kFALSE;
@@ -150,9 +150,7 @@ Int_t SBSGEMPlane::DefineVariables( EMode mode ) {
           { "adc5", "ADC sample", "fadc5" },
           { "adc_sum", "ADC samples sum", "fadc_sum" },
           { "common_mode", "Common Mode", "fcommon_mode" },
-	  { "fine_time", "Fine Trigger Time", "fine_time" },
-	  { "coarse_time1", "Coarse Trigger Time 1", "coarse_time1" },
-	  { "coarse_time2", "Coarse Trigger Time 2", "coarse_time2" },
+	  { "trigger_time", "Trigger Time", "trigger_time" },
 	  { "ev_num","event counter","ev_num"},
           { 0 },
       };
@@ -182,10 +180,11 @@ Int_t   SBSGEMPlane::Decode( const THaEvData& evdata ){
 
         // Find channel for trigger time first
       Int_t effChan = it->mpd_id << 5 ;  // Channel reserved for trigger time
-	coarse_time1 = evdata.GetData(it->crate,it->slot,effChan,0);
-	coarse_time2 = evdata.GetData(it->crate,it->slot,effChan,1);
-	fine_time = evdata.GetData(it->crate,it->slot,effChan,2);
-
+	ULong_t coarse_time1 = evdata.GetData(it->crate,it->slot,effChan,0);
+	UInt_t coarse_time2 = evdata.GetData(it->crate,it->slot,effChan,1);
+	UInt_t fine_time = evdata.GetData(it->crate,it->slot,effChan,2);
+	trigger_time = ((coarse_time1<<20)|coarse_time2)+fine_time/6.0;
+	
 	effChan = it->mpd_id<<4;
 	ev_num = evdata.GetData(it->crate,it->slot,effChan,0);
 	

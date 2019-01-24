@@ -62,9 +62,7 @@ class SBSGEMPlane : public THaSubDetector {
         Double_t *fPedestal;
   	Int_t *fcommon_mode; //[fNch]
         Double_t *fRMS;
-        Int_t coarse_time1;
-        Int_t coarse_time2;
-        Int_t fine_time;
+        Double_t trigger_time;
         Int_t ev_num;
   
         ClassDef(SBSGEMPlane,0)
