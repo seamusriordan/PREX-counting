@@ -271,8 +271,8 @@ Int_t   SBSGEMPlane::Decode( const THaEvData& evdata ){
 	    }
 	    // Average the channels with middle 1/3 signals
 	    Double_t cm_noise = 0;
-	    Int_t n_cmn = N_APV25_CHAN/3;
-	    for(Int_t strip =n_cmn; strip<2*n_cmn;++strip){
+	    Int_t n_cutoff = 20 ; 
+	    for(Int_t strip =n_cutoff; strip< N_APV25_CHAN -n_cutoff ;++strip){
 	      if(arrADCSum[strip+1]<arrADCSum[strip]) // Unless N_CMN_CHAN !=128
 		std::cout << "Sorting went Wrong ! " << std::endl;
 	      cm_noise += arrADCSum[strip];
