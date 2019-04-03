@@ -34,3 +34,6 @@
 *~
 *.bak
 .*.swp
+
+#Dictionaries
+*Dict.*

@@ -18,7 +18,9 @@ struct mpdmap_t {
 #define N_APV25_CHAN    128
 #define N_MPD_TIME_SAMP 6
 #define MPDMAP_ROW_SIZE 8
+#define N_CMN_CHAN 100
 
+const int APVMAP[128] = {1, 33, 65, 97, 9, 41, 73, 105, 17, 49, 81, 113, 25, 57, 89, 121, 3, 35, 67, 99, 11, 43, 75, 107, 19, 51, 83, 115, 27, 59, 91, 123, 5, 37, 69, 101, 13, 45, 77, 109, 21, 53, 85, 117, 29, 61, 93, 125, 7, 39, 71, 103, 15, 47, 79, 111, 23, 55, 87, 119, 31, 63, 95, 127, 0, 32, 64, 96, 8, 40, 72, 104, 16, 48, 80, 112, 24, 56, 88, 120, 2, 34, 66, 98, 10, 42, 74, 106, 18, 50, 82, 114, 26, 58, 90, 122, 4, 36, 68, 100, 12, 44, 76, 108, 20, 52, 84, 116, 28, 60, 92, 124, 6, 38, 70, 102, 14, 46, 78, 110, 22, 54, 86, 118, 30, 62, 94, 126};
 
 class SBSGEMPlane : public THaSubDetector {
     public:
@@ -56,9 +58,13 @@ class SBSGEMPlane : public THaSubDetector {
         Int_t *fadc3; // [fNch]
         Int_t *fadc4; // [fNch]
         Int_t *fadc5; // [fNch]
-        Double_t *fPedestal; 
-        Double_t *fRMS; 
-
+	Int_t *fadc_sum; //[fNch]
+        Double_t *fPedestal;
+  	Int_t *fcommon_mode; //[fNch]
+        Double_t *fRMS;
+        Double_t trigger_time;
+        Int_t ev_num;
+  
         ClassDef(SBSGEMPlane,0)
 
 };
