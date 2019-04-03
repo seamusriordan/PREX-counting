@@ -13,19 +13,8 @@
 //   Aug 31, 2018
 /////////////////////////////////////////////////////////////////////
 
-/*
-#define MPD_VERSION_TAG 0xE0000000
-#define MPD_EVENT_TAG   0x10000000
-#define MPD_MODULE_TAG  0x20000000
-#define MPD_ADC_TAG     0x30000000
-#define MPD_HEADER_TAG  0x40000000
-#define MPD_DATA_TAG    0x0
-#define MPD_TRAILER_TAG 0x50000000
-*/
-
 #include "MPDModule.h"
 #include "THaSlotData.h"
-
 
 using namespace std;
 
@@ -243,75 +232,6 @@ namespace Decoder {
               return -1;
           }
       }
-
-      //printf("=================  END !!! =================================\n");
-
-      /*
-         v4 decoder
-
-      for( Int_t i = 0; i < len; i++ ){
-          tag = p[i] & 0xf0000000;
-
-          switch(tag) {
-              case MPD_MODULE_TAG:
-                  cout <<"Module TAG"<<endl;
-                  mpdID = p[i] & 0xffff;
-                  break;
-              case MPD_ADC_TAG:
-                  cout <<"ADC TAG"<<endl;
-                  adcCh = p[i] & 0xff;
-                  break;
-              case MPD_HEADER_TAG:
-                  cout <<"HEADER TAG"<<endl;
-                  header = (p[i] >> 4) & 0x1ff;
-                   // This is following the decoder I got from Evaristo
-                   // It doesn't seem to match the data I have
-                  //if( (header & 0xe00) != 0xe00 ){
-                      // APV interal memory error in header decoding
-                   //   fprintf(stderr, "MPDModule::LoadSlot Warning: APV memory corruption 0x%03x\n", header );
-                   //   return -1;
-                  //}
-                  break;
-              case MPD_TRAILER_TAG:
-                  cout <<"TRAILER TAG"<<endl;
-                  // Not sure if this is useful to save
-                  trailer = p[i] & 0xfff;
-                  if( (data_count % 16) != 0 ){
-                      // Missing data
-                      fprintf(stderr, "MPDModule::LoadSlot Warning: Missing data?\n");
-                      return -1;
-                  }
-                  data_count = 0;
-                  break;
-
-              case MPD_DATA_TAG:
-                  cout <<"DATA TAG"<<endl;
-                  // Not sure if this is useful to save
-                  data = p[i] & 0xfff;
-                  ch   = (p[i] >> 12) & 0x7f;
-
-                  // Otherwise we have data
-                  effCh = (mpdID) << 8 | adcCh;
-                  if( fDebugFile ){
-                      *fDebugFile << hex << "raw ev buff   "<< mpdID << "   " << adcCh <<"   "<< p[i]  <<endl;
-                  }
-
-                  status = sldat->loadData("adc",effCh, data, data);
-                  if( status != SD_OK ) return -1;
-
-                  fWordsSeen++;
-                  data_count++;
-                  break;
-
-              default:
-                  // Bad tag
-                  fprintf(stderr, "MPDModule::LoadSlot Warning: Bad Tag 0x%08x\n", tag);
-                  return -1;
-
-          }
-
-      }
-  */
 
       return fWordsSeen;
   }
