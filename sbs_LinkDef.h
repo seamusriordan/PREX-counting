@@ -9,7 +9,7 @@
 #pragma link C++ namespace Decoder;
 
 #pragma link C++ class Decoder::SBSDecodeF1TDCModule+;
-#pragma link C++ class Decoder::MPDModule+;
+//#pragma link C++ class Decoder::MPDModule+;
 #pragma link C++ class SBSBigBite+;
 #pragma link C++ class SBSGEMStand+;
 #pragma link C++ class SBSGEMPlane+;
@@ -21,10 +21,8 @@
 #pragma link C++ class SBSEArm+;
 #pragma link C++ class SBSHCal+;
 #pragma link C++ class SBSCalorimeter+;
+#pragma link C++ class SBSCalorimeterCluster+;
 #pragma link C++ class SBSCalorimeterBlock+;
-#pragma link C++ class SBSCalorimeterBlockTDC+;
-#pragma link C++ class SBSCalorimeterBlockSamples+;
-#pragma link C++ class SBSCalorimeterBlockSamplesTDC+;
 #pragma link C++ class SBSCalorimeterBlockData+;
 #pragma link C++ class SBSCDet+;
 #pragma link C++ class SBSTimingHodoscope+;

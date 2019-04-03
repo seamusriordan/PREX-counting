@@ -12,6 +12,9 @@
 //   sriordan@anl.gov
 //   Aug 31, 2018
 //
+//   v5 Version with online SSP zero supression, based on documentation
+//   from Ben (DAQ group) which I got from Danning Di.
+//   Juan Carlos Cornejo <cornejo@jlab.org> - 2018/10/23
 //
 /////////////////////////////////////////////////////////////////////
 
@@ -25,9 +28,13 @@
 #define MPD_TRAILER_TAG 0x50000000
 */
 
+#define SSP_DATADEF(b) ((b&0x80000000)>>31)
+#define SSP_TAG(b)     ((b&0x78000000)>>27)
+#define SSP_SAMPLE(b,c) ((b>>c)&0xFFF)|(((b>>c)&0x1000)?0xFFFFF000:0x0)
 
 #include "MPDModule.h"
 #include "THaSlotData.h"
+#include <limits>
 
 using namespace std;
 
@@ -57,13 +64,13 @@ namespace Decoder {
   
   Int_t MPDModule::LoadSlot(THaSlotData *sldat, const UInt_t* evbuffer, Int_t pos, Int_t len) {
       const UInt_t *p = &evbuffer[pos];
-      UInt_t data;
+      //UInt_t data;
       fWordsSeen = 0;
 
       // From stand alone decoder
       // We declare an effective channel from the MPD ID 
       // and ADC channel
-      Int_t tag, header, trailer, ch, status;
+      Int_t ch, status;
       Int_t mpdID = -1;
       Int_t adcCh = -1;
       Int_t effCh = 0;
@@ -75,7 +82,6 @@ namespace Decoder {
       Int_t trigger_time;
 
       //  v5 decoder
-      
       int ii,jj,kk,ll;
       int thesewords;
 
@@ -246,6 +252,7 @@ namespace Decoder {
               return -1;
           }
       }
+      */
 
       //printf("=================  END !!! =================================\n");
 

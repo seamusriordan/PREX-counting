@@ -57,7 +57,7 @@ void replay(){
   run->SetDataRequired(0);
   run->SetDate(TDatime());
 
-  analyzer->SetVerbosity(0);
+  analyzer->SetVerbosity(3);
   
   // Define the analysis parameters
   analyzer->SetEvent( event );

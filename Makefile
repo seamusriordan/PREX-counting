@@ -7,7 +7,8 @@ SRC = MPDModule.cxx SBSBigBite.cxx SBSGEMStand.cxx SBSGEMPlane.cxx SBSBBShowerCl
       SBSGRINCH.cxx SBSGRINCH_ClusterList.cxx SBSScintPlane.cxx \
       SBSECal.cxx SBSECalCluster.cxx SBSEArm.cxx  SBSHCal.cxx \
       SBSDecodeF1TDCModule.cxx \
-      SBSCalorimeter.cxx SBSCalorimeterBlock.cxx SBSCalorimeterBlockData.cxx
+      SBSCalorimeter.cxx SBSCalorimeterBlock.cxx SBSCalorimeterBlockData.cxx \
+      SBSCalorimeterCluster.cxx
 
 EXTRAHDR = MPDModule.h SBSBigBite.h SBSGEMStand.h SBSGEMPlane.h SBSBBShowerCluster.h\
 	   SBSBBShower.h SBSBBTotalShower.h SBSCDet.h\
@@ -16,11 +17,10 @@ EXTRAHDR = MPDModule.h SBSBigBite.h SBSGEMStand.h SBSGEMPlane.h SBSBBShowerClust
 	   SBSGRINCH.h SBSGRINCH_ClusterList.h SBSScintPlane.h \
            SBSECal.h SBSECalCluster.h SBSEArm.h SBSHCal.h \
      SBSDecodeF1TDCModule.h \
-     SBSCalorimeter.h SBSCalorimeterBlock.h SBSCalorimeterBlockData.h
+     SBSCalorimeter.h SBSCalorimeterBlock.h SBSCalorimeterBlockData.h \
+     SBSCalorimeterCluster.h
 
 CORE = sbs
-CORELIB  = lib$(CORE).so
-COREDICT = $(CORE)Dict
 
 LINKDEF = $(CORE)_LinkDef.h
 
@@ -38,8 +38,13 @@ export MCDATA = 1
 export EXTRAWARN = 1
 
 # Architecture to compile for
-ARCH          = linux
-#ARCH          = solarisCC5
+MACHINE := $(shell uname -s)
+ARCH    := linux
+SOSUF   := so
+ifeq ($(MACHINE),Darwin)
+  ARCH := macosx
+  SOSUF := dylib
+endif
 
 #------------------------------------------------------------------------------
 # Directory locations. All we need to know is INCDIRS.
@@ -49,7 +54,7 @@ ifndef ANALYZER
   $(error $$ANALYZER environment variable not defined)
 endif
 
-INCDIRS  = $(wildcard $(addprefix $(ANALYZER)/, include src hana_decode hana_scaler))
+INCDIRS  = $(wildcard $(addprefix $(ANALYZER)/, include src hana_decode hana_scaler Podd HallA))
 
 ifdef EVIO_INCDIR
   INCDIRS += ${EVIO_INCDIR}
@@ -79,13 +84,16 @@ ifeq ($(ROOTVERMAJOR),5)
 	ROOTDICT_CMD = $(ROOTBIN)/rootcint
 	ROOTDICT_CMD_FLAGS = 
 else
-	## ROOT6 uses rootcling
+## ROOT6 uses rootcling
 	ROOTDICT_CMD = $(ROOTBIN)/rootcling
 	ROOTDICT_CMD_FLAGS = -rmf $(COREDICT).rootmap
 endif
 
 PKGINCLUDES  = $(addprefix -I, $(INCDIRS) ) -I$(shell pwd)
 INCLUDES     = -I$(shell root-config --incdir) $(PKGINCLUDES)
+
+CORELIB  = lib$(CORE).$(SOSUF)
+COREDICT = $(CORE)Dict
 
 LIBS          = 
 GLIBS         = 
@@ -120,21 +128,34 @@ CXXFLAGS     += -march=core2 -mfpmath=sse
 endif
 endif
 
-ifeq ($(ARCH),solarisCC5)
-# Solaris CC 5.0
+ifeq ($(ARCH),macosx)
+# Mac OS X with gcc >= 3.x or clang++ >= 5
 ifdef DEBUG
-  CXXFLAGS    = -g
-  LDFLAGS     = -g
-  DEFINES     =
+  CXXFLG     := -g -O0
+  LDFLAGS    := -g -O0
+  DEFINES    :=
 else
-  CXXFLAGS    = -O
-  LDFLAGS     = -O
-  DEFINES     = -DNDEBUG
+  CXXFLG     := -O
+  LDFLAGS    := -O
+  DEFINES    := -DNDEBUG
 endif
-DEFINES      += -DSUNVERS -DHAS_SSTREAM
-CXXFLAGS     += -KPIC
-SOFLAGS       = -G
-DICTCXXFLG   :=
+DEFINES      += -DMACVERS -DHAS_SSTREAM
+CXXFLG       += -Wall -fPIC
+CXXEXTFLG     =
+LD           := $(CXX)
+LDCONFIG     :=
+SOFLAGS      := -shared -Wl,-undefined,dynamic_lookup
+SONAME       := -Wl,-install_name,
+ifeq ($(CXX),clang++)
+CXXEXTFLG    += -Wextra -Wno-missing-field-initializers -Wno-unused-parameter
+else
+#FIXME: should be configure'd:
+CXXVER       := $(shell g++ --version | head -1 | sed 's/.* \([0-9]\)\..*/\1/')
+ifeq ($(CXXVER),4)
+CXXEXTFLG    += -Wextra -Wno-missing-field-initializers
+DICTCXXFLG   := -Wno-strict-aliasing
+endif
+endif
 endif
 
 ifdef VERBOSE
@@ -148,15 +169,8 @@ DEFINES      += -DMCDATA
 endif
 
 CXXFLAGS     += $(DEFINES) $(ROOTCFLAGS) $(ROOTCFLAGS) $(PKGINCLUDES)
-LIBS         += $(ROOTLIBS) $(SYSLIBS)
-GLIBS        += $(ROOTGLIBS) $(SYSLIBS)
-
-## ROOT6 requires c++11 enabled in gcc
-ifeq ($(shell root-config --has-cxx11),yes)
-MAKEDEPEND    = gcc --std=c++11
-else
-MAKEDEPEND    = gcc
-endif
+LIBS         += $(ROOTLIBS)
+GLIBS        += $(ROOTGLIBS)
 
 ifndef PKG
 PKG           = lib$(CORE)
@@ -185,7 +199,7 @@ endif
 
 $(COREDICT).cxx: $(HDR) $(LINKDEF)
 	@echo "Generating dictionary $(COREDICT)..."
-	#$(ROOTDICT_CMD) -f $@ -c $(INCLUDES) $(DEFINES) $^ ;
+#$(ROOTDICT_CMD) -f $@ -c $(INCLUDES) $(DEFINES) $^ ;
 	$(ROOTDICT_CMD) -f $@ $(ROOTDICT_CMD_FLAGS) -c $(INCLUDES) $(DEFINES) $^ ;
 
 install:	all
@@ -224,15 +238,17 @@ develdist:	srcdist
 .SUFFIXES: .c .cc .cpp .cxx .C .o .d
 
 %.o:	%.cxx
+ifeq ($(strip $(MAKEDEPEND)),)
+	$(CXX) $(CXXFLAGS) -MMD -o $@ -c $<
+	@mv -f $*.d $*.d.tmp
+else
 	$(CXX) $(CXXFLAGS) -o $@ -c $<
-
-# FIXME: this only works with gcc
-%.d:	%.cxx
-	@echo Creating dependencies for $<
-	@$(SHELL) -ec '$(MAKEDEPEND) -MM $(INCLUDES) -c $< \
-		| sed '\''s%^.*\.o%$*\.o%g'\'' \
-		| sed '\''s%\($*\)\.o[ :]*%\1.o $@ : %g'\'' > $@; \
-		[ -s $@ ] || rm -f $@'
+	$(MAKEDEPEND) $(ROOTINC) $(INCLUDES) $(DEFINES) -c $< > $*.d.tmp
+endif
+	@sed -e 's|.*:|$*.o:|' < $*.d.tmp > $*.d
+	@sed -e 's/.*://' -e 's/\\$$//' < $*.d.tmp | fmt -1 | \
+	  sed -e 's/^ *//' -e 's/$$/:/' >> $*.d
+	@rm -f $*.d.tmp
 
 ###
 
