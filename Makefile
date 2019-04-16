@@ -1,10 +1,10 @@
 #------------------------------------------------------------------------------
 # Core library
-SRC = MPDModule.cxx SBSGEMStand.cxx SBSGEMPlane.cxx 
+SRC = MPDModule.cxx PREXGEMStand.cxx PREXGEMPlane.cxx 
 
-EXTRAHDR = MPDModule.h SBSGEMStand.h SBSGEMPlane.h
+EXTRAHDR = MPDModule.h PREXGEMStand.h PREXGEMPlane.h
 
-CORE = prex
+CORE = prexCounting
 
 LINKDEF = $(CORE)_LinkDef.h
 
@@ -187,7 +187,7 @@ $(COREDICT).cxx: $(HDR) $(LINKDEF)
 	$(ROOTDICT_CMD) -f $@ $(ROOTDICT_CMD_FLAGS) -c $(INCLUDES) $(DEFINES) $^ ;
 
 install:	all
-		cp *.so $(SBS_LIBDIR)
+		cp *.so $(PREX_LIBDIR)
 #		$(error Please define install yourself)
 # for example:
 #		cp $(USERLIB) $(LIBDIR)
