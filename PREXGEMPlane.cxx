@@ -49,7 +49,7 @@ PREXGEMPlane::~PREXGEMPlane() {
 Int_t PREXGEMPlane::ReadDatabase( const TDatime& date ){
     std::cout << "[PREXGEMPlane::ReadDatabase]" << std::endl;
 
-    Int_t status;
+    Int_t err;
 
     FILE* file = OpenFile( date );
     if( !file ) return kFileError;
@@ -58,12 +58,15 @@ Int_t PREXGEMPlane::ReadDatabase( const TDatime& date ){
     std::vector<Double_t> rawrms;
 
     const DBRequest request[] = {
-        { "chanmap",        &fChanMapData,        kIntV, 0, 0},
+        { "chanmap",        &fChanMapData,  kIntV,    0, 0},
         { "ped",            &rawped,        kDoubleV, 0, 1},
         { "rms",            &rawrms,        kDoubleV, 0, 1},
         {}
     };
-    status = LoadDB( file, date, request, fPrefix );
+    err = LoadDB( file, date, request, fPrefix );
+
+    if( err ) return err;
+
     fclose(file);
 
     Int_t nentry = fChanMapData.size()/MPDMAP_ROW_SIZE;
@@ -173,8 +176,6 @@ void    PREXGEMPlane::Clear( Option_t* opt){
 
 Int_t   PREXGEMPlane::Decode( const THaEvData& evdata ){
 //    std::cout << "[PREXGEMPlane::Decode " << fName << "]" << std::endl;
-
-    int i;
 
     fNch = 0;
     for (std::vector<mpdmap_t>::iterator it = fMPDmap.begin() ; it != fMPDmap.end(); ++it){

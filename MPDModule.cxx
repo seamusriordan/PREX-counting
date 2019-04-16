@@ -41,10 +41,11 @@ namespace Decoder {
       UInt_t data;
       fWordsSeen = 0;
 
+      Int_t status;
+
       // From stand alone decoder
       // We declare an effective channel from the MPD ID 
       // and ADC channel
-      Int_t tag, header, trailer, ch, status;
       Int_t mpdID = -1;
       Int_t adcCh = -1;
       Int_t effCh = 0;
@@ -156,7 +157,7 @@ namespace Decoder {
                           int x_data = p[jj++];
 
                           data =  x_data& 0x00FFF;
-                          ch   = (x_data& 0x7F000)>>12;
+                          //ch   = (x_data& 0x7F000)>>12;
                           //printf("%3d %03x  ", ch, data);
 
                           // Otherwise we have data

@@ -9,6 +9,6 @@
 #pragma link C++ namespace Decoder;
 
 #pragma link C++ class Decoder::MPDModule+;
-#pragma link C++ class SBSGEMStand+;
-#pragma link C++ class SBSGEMPlane+;
+#pragma link C++ class PREXGEMStand+;
+#pragma link C++ class PREXGEMPlane+;
 #endif
