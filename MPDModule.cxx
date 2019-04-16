@@ -4,13 +4,6 @@
 //   This is the MPD module decoder; based on SkeletonModule
 //   (https://github.com/JeffersonLab/analyzer)
 //
-//   E. Cisbani
-//   Original Version:   2015/Dec
-//   
-//   v5 Version based on documentation by Paulo Musico
-//   Seamus Riordan
-//   sriordan@anl.gov
-//   Aug 31, 2018
 /////////////////////////////////////////////////////////////////////
 
 #include "MPDModule.h"
@@ -34,10 +27,8 @@ namespace Decoder {
   
   void MPDModule::Init() { 
     Module::Init();
-//    Config(0,25,6,16,128); // should be called by the user
     fDebugFile=0;
     Clear("");
-//    fName = "MPD Module (INFN MPD for GEM and more), use Config to dynamic config";
     fName = "MPD Module";
   }
 

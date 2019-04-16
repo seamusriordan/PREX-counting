@@ -6,7 +6,6 @@
 //   MPDModule
 //   This is the MPD INFN (GEM readout for SBS) module decoder
 //   Note, it must inherit from VmeModule.
-//   Feel free to copy this and make appropriate changes.
 //
 //   other steps
 //   1. Register (add "DoRegister" call and include the header)
@@ -21,11 +20,7 @@
 //
 /////////////////////////////////////////////////////////////////////
 
-//#define LIKEV792x 0
 
-// (jc2) What was this used for? Seems to conflict with a value defined
-// in Caen775. So I've commented out.
-//#define NTDCCHAN   32
 #define MAXHIT    2048
 
 #include "VmeModule.h"
@@ -40,41 +35,12 @@ namespace Decoder {
     MPDModule(Int_t crate, Int_t slot);
     virtual ~MPDModule();
 
-    /*
-    using Module::GetData;
-    using Module::LoadSlot;
-    */
 
     virtual Int_t GetData(Int_t adc, Int_t sample, Int_t chan) const;
     virtual void Init();
     virtual void Clear(const Option_t *opt);
     virtual Int_t Decode(const UInt_t *p); // { return 0; };
     
-    /*
-    void Config(Int_t mode, Int_t sampleperiod, Int_t nsample, Int_t nadc=16, Int_t nch=128) {
-      fAcqMode = mode;
-      fSamplePeriod = sampleperiod;
-      fNumSample = nsample;
-      fNumADC=nadc;
-      fNumChan=nch;
-      fData.clear();
-      fFrameHeader.clear();
-      fFrameTrailer.clear();
-      for (Int_t i=0;i<fNumADC*fNumSample*fNumChan;i++) {
-	fData.push_back(0);
-      }
-      for (Int_t i=0;i<fNumADC*fNumSample;i++) { 
-	fFrameHeader.push_back(0);
-	fFrameTrailer.push_back(0);
-      }
-      IsInit = kTRUE;
-      //     CheckSetMode();
-    }
-    */
-
-    
-//#ifdef LIKEV792x
-    // Loads slot data.  if you don't define this, the base class's method is used
     virtual Int_t LoadSlot(THaSlotData *sldat,  const UInt_t *evbuffer, Int_t pos, Int_t len);
 //#endif
 
