@@ -1,20 +1,20 @@
-#ifndef PREXGEMSTAND_H
-#define PREXGEMSTAND_H
+#ifndef GEMSTAND_H
+#define GEMSTAND_H
 #include <vector>
 #include <THaTrackingDetector.h>
 
 class THaRunBase;
 class THaApparatus;
 class THaEvData;
-class PREXGEMPlane;
+class GEMPlane;
 class THaCrateMap;
 
-class PREXGEMStand : public THaTrackingDetector {
+class GEMStand : public THaTrackingDetector {
     public:
-        PREXGEMStand( const char *name, const char *description = "",
+        GEMStand( const char *name, const char *description = "",
                 THaApparatus *app = 0 );
 
-        virtual ~PREXGEMStand();
+        virtual ~GEMStand();
 
         virtual void    Clear( Option_t* opt="" );
         virtual Int_t   Decode( const THaEvData& );
@@ -32,10 +32,10 @@ class PREXGEMStand : public THaTrackingDetector {
         virtual Int_t   End( THaRunBase* r=0 );
 
     private:
-        std::vector <PREXGEMPlane *> fPlanes;
+        std::vector <GEMPlane *> fPlanes;
 
         THaCrateMap *fCrateMap;
-        ClassDef(PREXGEMStand ,0)
+        ClassDef(GEMStand ,0)
 };
 
 #endif

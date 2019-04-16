@@ -6,7 +6,7 @@
 set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Set build type (Debug is default)")
 
 cmake_minimum_required(VERSION 2.8 FATAL_ERROR)
-project(prex)
+project(prexCounting)
 
 ## Disable in-source builds!
 if("${PROJECT_SOURCE_DIR}" STREQUAL "${PROJECT_BINARY_DIR}")
@@ -18,7 +18,7 @@ endif()
 
 ##----------------------------------------------------------------------------
 ## Set the sources which have a corresponding .h file here
-set(sources PREXGEMStand.cxx PREXGEMPlane.cxx MPDModule.cxx) 
+set(sources GEMStand.cxx GEMPlane.cxx MPDModule.cxx) 
 ## Make corresponding header files
 string(REGEX REPLACE .cxx .h headers "${sources}")
 ## Append a few extra header files in the repository.  (But do not append the
@@ -37,6 +37,11 @@ set(TESTCODE ON CACHE BOOL "Compile extra diagnostic code (extra computations an
 set(MCDATA ON CACHE BOOL "Compile support code for MC input data")
 set(CXXMAXERRORS 0 CACHE INT "Maximum number of allowed errors before cxx stops")
 list(APPEND PREXEXTRADEF_LIST VERBOSE TESTCODE MCDATA)
+
+#----------------------------------------------------------------------------
+# Find ROOT (using custom FindROOT.cmake taken from G4SBS)
+set(minimum_root_version 5.10)
+find_package(ROOT REQUIRED)
 
 #----------------------------------------------------------------------------
 ## Setup the PODD Analyzer

@@ -238,7 +238,7 @@ namespace Decoder {
     return fData[idx];
   }
   
-  void MPDModule::Clear(const Option_t *opt) {
+  void MPDModule::Clear(const Option_t *) {
     fNumHits = 0;
     for (Int_t i=0; i<fNumChan*fNumSample*fNumADC; i++) fData[i]=0;
     for (Int_t i=0; i<fNumADC*fNumSample; i++) { 
@@ -248,7 +248,7 @@ namespace Decoder {
     
   }
   
-  Int_t MPDModule::Decode(const UInt_t *pdat) {
+  Int_t MPDModule::Decode(const UInt_t *) {
     
     
     return 0;
