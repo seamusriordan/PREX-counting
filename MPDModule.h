@@ -37,11 +37,18 @@ namespace Decoder {
 
 
     virtual Int_t GetData(Int_t adc, Int_t sample, Int_t chan) const;
+    // Stubs for virtual overloading
+    virtual UInt_t GetData(Int_t)        const { return 0;}
+    virtual Int_t  GetData(Int_t, Int_t) const { return 0;}
+    virtual Int_t  GetData(Decoder::EModuleType, Int_t, Int_t)        const { return 0;}
+    virtual Int_t  GetData(Decoder::EModuleType, Int_t, Int_t, Int_t) const { return 0;}
+
     virtual void Init();
     virtual void Clear(const Option_t *opt);
     virtual Int_t Decode(const UInt_t *p); // { return 0; };
     
     virtual Int_t LoadSlot(THaSlotData *sldat,  const UInt_t *evbuffer, Int_t pos, Int_t len);
+    virtual Int_t LoadSlot(THaSlotData *sldat,  const UInt_t *evbuffer, const UInt_t *pstop);
 //#endif
 
   private:

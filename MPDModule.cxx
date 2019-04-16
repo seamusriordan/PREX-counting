@@ -32,6 +32,9 @@ namespace Decoder {
     fName = "MPD Module";
   }
 
+  Int_t MPDModule::LoadSlot(THaSlotData *sldat, const UInt_t* evbuffer, const UInt_t *pstop) {
+      return LoadSlot( sldat, evbuffer, 0, pstop-evbuffer );
+  }
   
   Int_t MPDModule::LoadSlot(THaSlotData *sldat, const UInt_t* evbuffer, Int_t pos, Int_t len) {
       const UInt_t *p = &evbuffer[pos];
