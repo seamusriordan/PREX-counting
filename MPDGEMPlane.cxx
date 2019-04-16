@@ -1,10 +1,10 @@
 #include <iostream>
-#include "GEMPlane.h"
+#include "MPDGEMPlane.h"
 #include "TDatime.h"
 #include "THaEvData.h"
 
 
-GEMPlane::GEMPlane( const char *name, const char *description,
+MPDGEMPlane::MPDGEMPlane( const char *name, const char *description,
     THaDetectorBase* parent ):
     THaSubDetector(name,description,parent),
     fNch(0),fStrip(NULL),fPedestal(NULL),fcommon_mode(NULL),
@@ -21,7 +21,7 @@ GEMPlane::GEMPlane( const char *name, const char *description,
     return;
 }
 
-GEMPlane::~GEMPlane() {
+MPDGEMPlane::~MPDGEMPlane() {
     if( fStrip ){
         fadc0 = NULL;
         fadc1 = NULL;
@@ -46,8 +46,8 @@ GEMPlane::~GEMPlane() {
     return;
 }
 
-Int_t GEMPlane::ReadDatabase( const TDatime& date ){
-    std::cout << "[GEMPlane::ReadDatabase]" << std::endl;
+Int_t MPDGEMPlane::ReadDatabase( const TDatime& date ){
+    std::cout << "[MPDGEMPlane::ReadDatabase]" << std::endl;
 
     Int_t err;
 
@@ -121,7 +121,7 @@ Int_t GEMPlane::ReadDatabase( const TDatime& date ){
     		fPedestal[idx] = rawped[i+1];
     	} else {
 		
-    	    std::cout << "[GEMPlane::ReadDatabase]  WARNING: " << " strip " << idx  << " listed but not enough strips in cratemap" << std::endl;
+    	    std::cout << "[MPDGEMPlane::ReadDatabase]  WARNING: " << " strip " << idx  << " listed but not enough strips in cratemap" << std::endl;
     	}
     }
 
@@ -131,7 +131,7 @@ Int_t GEMPlane::ReadDatabase( const TDatime& date ){
 	if( idx < N_APV25_CHAN*nentry ){
 		fRMS[idx] = rawrms[i+1];
 	} else {
-	    std::cout << "[GEMPlane::ReadDatabase]  WARNING: " << " strip " << idx  << " listed but not enough strips in cratemap" << std::endl;
+	    std::cout << "[MPDGEMPlane::ReadDatabase]  WARNING: " << " strip " << idx  << " listed but not enough strips in cratemap" << std::endl;
 	}
     }
 
@@ -139,7 +139,7 @@ Int_t GEMPlane::ReadDatabase( const TDatime& date ){
     return 0;
 }
 
-Int_t GEMPlane::DefineVariables( EMode mode ) {
+Int_t MPDGEMPlane::DefineVariables( EMode mode ) {
     if( mode == kDefine and fIsSetup ) return kOK;
       fIsSetup = ( mode == kDefine );
 
@@ -169,13 +169,13 @@ Int_t GEMPlane::DefineVariables( EMode mode ) {
 
 }
 
-void    GEMPlane::Clear( Option_t* ){
+void    MPDGEMPlane::Clear( Option_t* ){
     fNch = 0;
     return;
 }
 
-Int_t   GEMPlane::Decode( const THaEvData& evdata ){
-//    std::cout << "[GEMPlane::Decode " << fName << "]" << std::endl;
+Int_t   MPDGEMPlane::Decode( const THaEvData& evdata ){
+//    std::cout << "[MPDGEMPlane::Decode " << fName << "]" << std::endl;
 
     fNch = 0;
     for (std::vector<mpdmap_t>::iterator it = fMPDmap.begin() ; it != fMPDmap.end(); ++it){
@@ -297,15 +297,15 @@ Int_t   GEMPlane::Decode( const THaEvData& evdata ){
     return 0;
 }
 
-void    GEMPlane::Print( Option_t* ) const{
+void    MPDGEMPlane::Print( Option_t* ) const{
     return;
 }
 
-Int_t   GEMPlane::Begin( THaRunBase* ){
+Int_t   MPDGEMPlane::Begin( THaRunBase* ){
     return 0;
 }
 
-Int_t   GEMPlane::End( THaRunBase* ){
+Int_t   MPDGEMPlane::End( THaRunBase* ){
     return 0;
 }
 
