@@ -2,6 +2,6 @@
 # Only used if db_run.dat is missing from both the applicable date-coded directory and
 # the current working directory.
 
-ebeam      = 1.
-sbs.theta    = 32.0
-sbs.pcentral = 11.0
+ebeam      = 0.950
+prex.theta    = 12.5
+prex.pcentral = 0.950

@@ -1,10 +1,10 @@
 #include <iostream>
-#include "SBSGEMPlane.h"
+#include "PREXGEMPlane.h"
 #include "TDatime.h"
 #include "THaEvData.h"
 
 
-SBSGEMPlane::SBSGEMPlane( const char *name, const char *description,
+PREXGEMPlane::PREXGEMPlane( const char *name, const char *description,
     THaDetectorBase* parent ):
     THaSubDetector(name,description,parent),
     fNch(0),fStrip(NULL),fPedestal(NULL),fcommon_mode(NULL),
@@ -21,7 +21,7 @@ SBSGEMPlane::SBSGEMPlane( const char *name, const char *description,
     return;
 }
 
-SBSGEMPlane::~SBSGEMPlane() {
+PREXGEMPlane::~PREXGEMPlane() {
     if( fStrip ){
         fadc0 = NULL;
         fadc1 = NULL;
@@ -46,8 +46,8 @@ SBSGEMPlane::~SBSGEMPlane() {
     return;
 }
 
-Int_t SBSGEMPlane::ReadDatabase( const TDatime& date ){
-    std::cout << "[SBSGEMPlane::ReadDatabase]" << std::endl;
+Int_t PREXGEMPlane::ReadDatabase( const TDatime& date ){
+    std::cout << "[PREXGEMPlane::ReadDatabase]" << std::endl;
 
     Int_t status;
 
@@ -118,7 +118,7 @@ Int_t SBSGEMPlane::ReadDatabase( const TDatime& date ){
     		fPedestal[idx] = rawped[i+1];
     	} else {
 		
-    	    std::cout << "[SBSGEMPlane::ReadDatabase]  WARNING: " << " strip " << idx  << " listed but not enough strips in cratemap" << std::endl;
+    	    std::cout << "[PREXGEMPlane::ReadDatabase]  WARNING: " << " strip " << idx  << " listed but not enough strips in cratemap" << std::endl;
     	}
     }
 
@@ -128,7 +128,7 @@ Int_t SBSGEMPlane::ReadDatabase( const TDatime& date ){
 	if( idx < N_APV25_CHAN*nentry ){
 		fRMS[idx] = rawrms[i+1];
 	} else {
-	    std::cout << "[SBSGEMPlane::ReadDatabase]  WARNING: " << " strip " << idx  << " listed but not enough strips in cratemap" << std::endl;
+	    std::cout << "[PREXGEMPlane::ReadDatabase]  WARNING: " << " strip " << idx  << " listed but not enough strips in cratemap" << std::endl;
 	}
     }
 
@@ -136,7 +136,7 @@ Int_t SBSGEMPlane::ReadDatabase( const TDatime& date ){
     return 0;
 }
 
-Int_t SBSGEMPlane::DefineVariables( EMode mode ) {
+Int_t PREXGEMPlane::DefineVariables( EMode mode ) {
     if( mode == kDefine and fIsSetup ) return kOK;
       fIsSetup = ( mode == kDefine );
 
@@ -166,13 +166,13 @@ Int_t SBSGEMPlane::DefineVariables( EMode mode ) {
 
 }
 
-void    SBSGEMPlane::Clear( Option_t* opt){
+void    PREXGEMPlane::Clear( Option_t* opt){
     fNch = 0;
     return;
 }
 
-Int_t   SBSGEMPlane::Decode( const THaEvData& evdata ){
-//    std::cout << "[SBSGEMPlane::Decode " << fName << "]" << std::endl;
+Int_t   PREXGEMPlane::Decode( const THaEvData& evdata ){
+//    std::cout << "[PREXGEMPlane::Decode " << fName << "]" << std::endl;
 
     int i;
 
@@ -296,15 +296,15 @@ Int_t   SBSGEMPlane::Decode( const THaEvData& evdata ){
     return 0;
 }
 
-void    SBSGEMPlane::Print( Option_t* opt) const{
+void    PREXGEMPlane::Print( Option_t* opt) const{
     return;
 }
 
-Int_t   SBSGEMPlane::Begin( THaRunBase* r){
+Int_t   PREXGEMPlane::Begin( THaRunBase* r){
     return 0;
 }
 
-Int_t   SBSGEMPlane::End( THaRunBase* r){
+Int_t   PREXGEMPlane::End( THaRunBase* r){
     return 0;
 }
 

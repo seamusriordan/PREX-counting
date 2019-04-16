@@ -6,10 +6,10 @@
 #include "THaCrateMap.h"
 #include "THaAnalysisObject.h"
 
-#include "SBSGEMStand.h"
-#include "SBSGEMPlane.h"
+#include "PREXGEMStand.h"
+#include "PREXGEMPlane.h"
 
-SBSGEMStand::SBSGEMStand( const char* name, const char* desc, THaApparatus* app ):
+PREXGEMStand::PREXGEMStand( const char* name, const char* desc, THaApparatus* app ):
     THaTrackingDetector(name,desc,app) {
 
         fPlanes.clear();
@@ -17,18 +17,18 @@ SBSGEMStand::SBSGEMStand( const char* name, const char* desc, THaApparatus* app 
         fCrateMap = 0;
 }
 
-SBSGEMStand::~SBSGEMStand(){
+PREXGEMStand::~PREXGEMStand(){
     return;
 }
 
 
-THaAnalysisObject::EStatus SBSGEMStand::Init( const TDatime& date ){
+THaAnalysisObject::EStatus PREXGEMStand::Init( const TDatime& date ){
     assert( fCrateMap == 0 );
 
     THaAnalysisObject::EStatus status = THaTrackingDetector::Init(date);
 
     if( status == kOK ){
-        for (std::vector<SBSGEMPlane *>::iterator it = fPlanes.begin() ; it != fPlanes.end(); ++it){
+        for (std::vector<PREXGEMPlane *>::iterator it = fPlanes.begin() ; it != fPlanes.end(); ++it){
             status = (*it)->Init(date);
             if( status != kOK ){
                 return status;
@@ -42,8 +42,8 @@ THaAnalysisObject::EStatus SBSGEMStand::Init( const TDatime& date ){
 }
 
 
-Int_t SBSGEMStand::ReadDatabase( const TDatime& date ){
-    std::cout << "[Reading SBSGEMStand database]" << std::endl;
+Int_t PREXGEMStand::ReadDatabase( const TDatime& date ){
+    std::cout << "[Reading PREXGEMStand database]" << std::endl;
 
     fIsInit = kFALSE;
 
@@ -71,11 +71,11 @@ Int_t SBSGEMStand::ReadDatabase( const TDatime& date ){
 
     std::vector<std::string> planes = vsplit(planeconfig);
     if( planes.empty()) {
-            Error("", "[SBSGEMStand::ReadDatabase] No planes defined");
+            Error("", "[PREXGEMStand::ReadDatabase] No planes defined");
     }
 
     for (std::vector<std::string>::iterator it = planes.begin() ; it != planes.end(); ++it){
-        fPlanes.push_back(new SBSGEMPlane( (*it).c_str(), (*it).c_str(), this));
+        fPlanes.push_back(new PREXGEMPlane( (*it).c_str(), (*it).c_str(), this));
     }
 
     status = kOK;
@@ -89,26 +89,26 @@ Int_t SBSGEMStand::ReadDatabase( const TDatime& date ){
 }
 
 
-Int_t SBSGEMStand::Begin( THaRunBase* run ){
-    for (std::vector<SBSGEMPlane *>::iterator it = fPlanes.begin() ; it != fPlanes.end(); ++it){
+Int_t PREXGEMStand::Begin( THaRunBase* run ){
+    for (std::vector<PREXGEMPlane *>::iterator it = fPlanes.begin() ; it != fPlanes.end(); ++it){
         (*it)->Begin(run);
     }
 
     return 0;
 }
 
-void SBSGEMStand::Clear( Option_t *opt ){
-    for (std::vector<SBSGEMPlane *>::iterator it = fPlanes.begin() ; it != fPlanes.end(); ++it){
+void PREXGEMStand::Clear( Option_t *opt ){
+    for (std::vector<PREXGEMPlane *>::iterator it = fPlanes.begin() ; it != fPlanes.end(); ++it){
         (*it)->Clear(opt);
     }
 
     return;
 }
 
-Int_t SBSGEMStand::Decode(const THaEvData& evdata ){
-//    std::cout << "[SBSGEMStand::Decode]" << std::endl;
+Int_t PREXGEMStand::Decode(const THaEvData& evdata ){
+//    std::cout << "[PREXGEMStand::Decode]" << std::endl;
 
-    for (std::vector<SBSGEMPlane *>::iterator it = fPlanes.begin() ; it != fPlanes.end(); ++it){
+    for (std::vector<PREXGEMPlane *>::iterator it = fPlanes.begin() ; it != fPlanes.end(); ++it){
         (*it)->Decode(evdata);
     }
 
@@ -116,8 +116,8 @@ Int_t SBSGEMStand::Decode(const THaEvData& evdata ){
 }
 
 
-Int_t SBSGEMStand::End( THaRunBase* run ){
-    for (std::vector<SBSGEMPlane *>::iterator it = fPlanes.begin() ; it != fPlanes.end(); ++it){
+Int_t PREXGEMStand::End( THaRunBase* run ){
+    for (std::vector<PREXGEMPlane *>::iterator it = fPlanes.begin() ; it != fPlanes.end(); ++it){
         (*it)->End(run);
     }
 
@@ -125,10 +125,10 @@ Int_t SBSGEMStand::End( THaRunBase* run ){
     return 0;
 }
 
-void SBSGEMStand::Print(const Option_t* opt) const {
+void PREXGEMStand::Print(const Option_t* opt) const {
     std::cout << "GEM Stand " << fName << " with " << fPlanes.size() << " planes defined:" << std::endl;
     /*
-    for (std::vector<SBSGEMPlane *>::iterator it = fPlanes.begin() ; it != fPlanes.end(); ++it){
+    for (std::vector<PREXGEMPlane *>::iterator it = fPlanes.begin() ; it != fPlanes.end(); ++it){
         std::cout << "\t"
         (*it)->Print(opt);
     }
@@ -141,16 +141,16 @@ void SBSGEMStand::Print(const Option_t* opt) const {
  }
 
 
-void SBSGEMStand::SetDebug( Int_t level ){
+void PREXGEMStand::SetDebug( Int_t level ){
       THaTrackingDetector::SetDebug( level );
-    for (std::vector<SBSGEMPlane *>::iterator it = fPlanes.begin() ; it != fPlanes.end(); ++it){
+    for (std::vector<PREXGEMPlane *>::iterator it = fPlanes.begin() ; it != fPlanes.end(); ++it){
         (*it)->SetDebug(level);
     }
 
     return;
 }
 
-Int_t SBSGEMStand::DefineVariables( EMode mode ){
+Int_t PREXGEMStand::DefineVariables( EMode mode ){
     if( mode == kDefine and fIsSetup ) return kOK;
     fIsSetup = ( mode == kDefine );
     RVarDef vars[] = {
@@ -163,10 +163,10 @@ Int_t SBSGEMStand::DefineVariables( EMode mode ){
 }
 
 
-Int_t SBSGEMStand::CoarseTrack( TClonesArray& tracks ){
+Int_t PREXGEMStand::CoarseTrack( TClonesArray& tracks ){
     return 0;
 }
-Int_t SBSGEMStand::FineTrack( TClonesArray& tracks ){
+Int_t PREXGEMStand::FineTrack( TClonesArray& tracks ){
     return 0;
 }
 

@@ -1,5 +1,5 @@
-# SBS-offline
-Reconstruction and analysis code for SuperBigBite (SBS) experiments
+# PREX-counting
+Reconstruction and analysis code for PREX counting mode
 
 This code is presently independent of TreeSearch library
 
@@ -15,9 +15,8 @@ Contains:
     replay.C
     Example driver script for analysis of GEM data
 
-    SBSBigBite
-    Roughing out the BigBite spectrometer for the
-    SBS suite of experiments
+    GEM Classes
+    General classes for GEM informatoin
 
     db_*
     Example databases for classes

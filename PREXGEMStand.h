@@ -1,20 +1,20 @@
-#ifndef SBSGEMSTAND_H
-#define SBSGEMSTAND_H
+#ifndef PREXGEMSTAND_H
+#define PREXGEMSTAND_H
 #include <vector>
 #include <THaTrackingDetector.h>
 
 class THaRunBase;
 class THaApparatus;
 class THaEvData;
-class SBSGEMPlane;
+class PREXGEMPlane;
 class THaCrateMap;
 
-class SBSGEMStand : public THaTrackingDetector {
+class PREXGEMStand : public THaTrackingDetector {
     public:
-        SBSGEMStand( const char *name, const char *description = "",
+        PREXGEMStand( const char *name, const char *description = "",
                 THaApparatus *app = 0 );
 
-        virtual ~SBSGEMStand();
+        virtual ~PREXGEMStand();
 
         virtual void    Clear( Option_t* opt="" );
         virtual Int_t   Decode( const THaEvData& );
@@ -32,10 +32,10 @@ class SBSGEMStand : public THaTrackingDetector {
         virtual Int_t   End( THaRunBase* r=0 );
 
     private:
-        std::vector <SBSGEMPlane *> fPlanes;
+        std::vector <PREXGEMPlane *> fPlanes;
 
         THaCrateMap *fCrateMap;
-        ClassDef(SBSGEMStand ,0)
+        ClassDef(PREXGEMStand ,0)
 };
 
 #endif

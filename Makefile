@@ -1,26 +1,10 @@
 #------------------------------------------------------------------------------
 # Core library
-SRC = MPDModule.cxx SBSBigBite.cxx SBSGEMStand.cxx SBSGEMPlane.cxx SBSBBShowerCluster.cxx\
-      SBSBBShower.cxx SBSBBTotalShower.cxx SBSCDet.cxx\
-      SBSScintHit.cxx SBSScintPMT.cxx SBSShowerBlock.cxx SBSTimingHodoscope.cxx\
-      SBSScintBar.cxx SBSTdcHit.cxx SBSAdcHit.cxx SBSScintPartialHit.cxx \
-      SBSGRINCH.cxx SBSGRINCH_ClusterList.cxx SBSScintPlane.cxx \
-      SBSECal.cxx SBSECalCluster.cxx SBSEArm.cxx  SBSHCal.cxx \
-      SBSDecodeF1TDCModule.cxx \
-      SBSCalorimeter.cxx SBSCalorimeterBlock.cxx SBSCalorimeterBlockData.cxx \
-      SBSCalorimeterCluster.cxx
+SRC = MPDModule.cxx SBSGEMStand.cxx SBSGEMPlane.cxx 
 
-EXTRAHDR = MPDModule.h SBSBigBite.h SBSGEMStand.h SBSGEMPlane.h SBSBBShowerCluster.h\
-	   SBSBBShower.h SBSBBTotalShower.h SBSCDet.h\
-	   SBSScintHit.h SBSScintPMT.h SBSShowerBlock.h SBSTimingHodoscope.h SBSScintBar.h\
-           SBSTdcHit.h SBSAdcHit.h SBSScintPartialHit.h \
-	   SBSGRINCH.h SBSGRINCH_ClusterList.h SBSScintPlane.h \
-           SBSECal.h SBSECalCluster.h SBSEArm.h SBSHCal.h \
-     SBSDecodeF1TDCModule.h \
-     SBSCalorimeter.h SBSCalorimeterBlock.h SBSCalorimeterBlockData.h \
-     SBSCalorimeterCluster.h
+EXTRAHDR = MPDModule.h SBSGEMStand.h SBSGEMPlane.h
 
-CORE = sbs
+CORE = prex
 
 LINKDEF = $(CORE)_LinkDef.h
 
