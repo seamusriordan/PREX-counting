@@ -4,7 +4,10 @@
 #include "THaEvData.h"
 #include <vector>
 
+#include "GEMHit.h"
 
+
+#define ALL(c) (c).begin(), (c).end()
 
 MPDGEMPlane::MPDGEMPlane( const char *name, const char *description,
     THaDetectorBase* parent ):
@@ -390,7 +393,7 @@ Int_t MPDGEMPlane::Decode( const THaEvData& evdata ){
 
 //    std::cout << fName << " channels found  " << nch << std::endl;
 
-    return 0;
+    return FindGEMHits();
 }
 
 Int_t MPDGEMPlane::GetRStripNumber( UInt_t strip, UInt_t pos, UInt_t invert ){
@@ -400,6 +403,191 @@ Int_t MPDGEMPlane::GetRStripNumber( UInt_t strip, UInt_t pos, UInt_t invert ){
 
     return RstripPos;
 }
+
+
+Int_t MPDGEMPlane::FindGEMHits(){
+  // Find and analyze clusters. Clusters of active strips are considered
+  // a "Hit".
+  //
+  // The cluster analysis is a critical part of the GEM analysis. Various
+  // things can and probably need to be done right here already: splitting
+  // oversized clusters, detecting noise hits/bogus clusters, detecting and
+  // fitting overlapping clusters etc.
+  //
+  // This analysis may even need to be re-done after preliminary tracking to
+  // see if the clustering can be improved using candidate tracks.
+  // Additionally, correlated amplitude information from a second readout
+  // direction in the same readout plane could be used here. These advanced
+  // procedures would require significant redesign of the code:
+  // all raw strip info will have to be saved and prcessed at a later point,
+  // similar to the finding of hit pairs in like-oriented planes of the MWDC.
+  //
+  // For the moment, we implement a very simple algorithm: any cluster of
+  // strips larger than what a single cluster should be is assumed to be two or
+  // more overlapping hits, and the cluster will be split as follows: anything
+  // that looks like a local peak followed by a valley will be considered an
+  // actual cluster. The parameter frac = fSplitFrac (0.0 ... 1.0) can
+  // be used for some crude tuning. frac > 0.0 means that a peak is
+  // only a peak if the amplitude drops below (1-frac), so
+  // frac = 0.1 means: trigger on a drop below 90% etc. Likewise for the
+  // following valley: the bottom is found if the amplitude rises again
+  // by (1+frac), so frac = 0.1 means: trigger on a rise above 110% etc.
+
+  // The active strip numbers must be sorted for the clustering algorithm
+
+
+    UInt_t nHits = 0;
+
+    sort( ALL(fSigStrips) );
+
+#ifndef NDEBUG
+    TreeSearch::GEMHit* prevHit = 0;
+#endif
+
+
+
+    Double_t frac_down = 1.0 - fSplitFrac, frac_up = 1.0 + fSplitFrac;
+
+    typedef Vint_t::iterator viter_t;
+    Vint_t splits;  // Strips with ampl split between 2 clusters
+    viter_t next = fSigStrips.begin();
+    while( next != fSigStrips.end() ) {
+        viter_t start = next, cur = next;
+        ++next;
+        assert( next == fSigStrips.end() or *next > *cur );
+        while( next != fSigStrips.end() and (*next - *cur) == 1  ) {
+            ++cur;
+            ++next;
+        }
+        // Now the cluster candidate is between start and cur
+        assert( *cur >= *start );
+        // The "type" parameter indicates the result of the cluster analysis:
+        // 0: clean (i.e. smaller than fMaxClusterSize, no further analysis)
+        // 1: large, maximum at right edge, not split
+        // 2: large, no clear minimum on the right side found, not split
+        // 3: split, well-defined peak found (may still be larger than maxsize)
+        Int_t  type = 0;
+        UInt_t size = *cur - *start + 1;
+        if( size > fMaxClusterSize ) {
+            Double_t maxadc = 0.0, minadc = kBig;
+            viter_t it = start, maxpos = start, minpos = start;
+            enum EStep { kFindMax = 1, kFindMin, kDone };
+            EStep step = kFindMax;
+            while( step != kDone and it != next ) {
+                Double_t adc = fADCcor[*it];
+                switch( step ) {
+                    case kFindMax:
+                        // Looking for maximum
+                        if( adc > maxadc ) {
+                            maxpos = it;
+                            maxadc = adc;
+                        } else if( adc < maxadc * frac_down ) {
+                            assert( maxadc > 0.0 );
+                            step = kFindMin;
+                            continue;
+                        }
+                        break;
+                    case kFindMin:
+                        // Looking for minimum
+                        if( adc < minadc ) {
+                            minpos = it;
+                            minadc = adc;
+                        } else if( adc > minadc * frac_up ) {
+                            assert( minadc < kBig );
+                            step = kDone;
+                        }
+                        break;
+                    case kDone:
+                        assert( false );  // should never get here
+                        break;
+                }
+                ++it;
+            }
+            if( step == kDone ) {
+                // Found maximum followed by minimum
+                assert( minpos != start );
+                assert( minpos != cur );
+                assert( *minpos > *maxpos );
+                // Split the cluster at the position of the minimum, assuming that
+                // the strip with the minimum amplitude is shared between both clusters
+                cur  = minpos;
+                next = minpos;
+                // In order not to double-count amplitude, we split the signal height
+                // of that strip evenly between the two clusters. This is a very
+                // crude way of doing what we really should be doing: "fitting" a peak
+                // shape and using the area and centroid of the curve
+                fADCcor[*minpos] /= 2.0;
+                splits.push_back(*minpos);
+            }
+            type = step;
+            size = *cur - *start + 1;
+            assert( *cur >= *start );
+        }
+        assert( size > 0 );
+        // Compute weighted position average. Again, a crude (but fast) substitute
+        // for fitting the centroid of the peak.
+        Double_t xsum = 0.0, adcsum = 0.0;
+        for( ; start != next; ++start ) {
+            Int_t istrip = *start;
+            Double_t pos = GetStart() + istrip * GetPitch();
+            Double_t adc = fADCcor[istrip];
+            xsum   += pos * adc;
+            adcsum += adc;
+        }
+        assert( adcsum > 0.0 );
+        Double_t pos = xsum/adcsum;
+
+        // The resolution (sigma) of the position measurement depends on the
+        // cluster size. In particular, if the cluster consists of only a single
+        // hit, the resolution is much reduced
+        Double_t resolution = fResolution;
+        if( size == 1 ) {
+            resolution = TMath::Max( 0.25*GetPitch(), fResolution );
+            // The factor of 1/2*pitch is just a guess. Since with real GEMs
+            // there _should_ always be more than one strip per cluster, we must
+            // assume that the other strip(s) did not fire due to inefficiency.
+            // As a result, the error is bigger than it would be if only ever one
+            // strip fired per hit.
+            //       resolution = TMath::Max( 0.5*GetPitch(), 2.0*fResolution );
+            //     } else if( size == 2 ) {
+            //       // Again, this is a guess, to be quantified with Monte Carlo
+            //       resolution = 1.2*fResolution;
+    }
+
+    // Make a new hit
+#ifndef NDEBUG
+    TreeSearch::GEMHit* theHit = 0;
+#endif
+#ifndef NDEBUG
+    theHit =
+#endif
+        new( (*fHits)[nHits++] ) TreeSearch::GEMHit( pos,
+                adcsum,
+                size,
+                type,
+                resolution,
+                this
+                );
+#ifndef NDEBUG
+    // Ensure hits are ordered by position (should be guaranteed by std::map)
+    assert( (prevHit == 0) or (theHit->Compare(prevHit) > 0) );
+    prevHit = theHit;
+#endif
+    }
+
+    // Undo amplitude splitting, if any, so fADCcor contains correct ADC values
+    for( viter_t it = splits.begin(); it != splits.end(); ++it ) {
+        fADCcor[*it] *= 2.0;
+    }
+
+    // Negative return value indicates potential problem
+    if( nHits > fMaxHits )
+        nHits = -nHits;
+
+    return nHits;
+}
+
+
 
 Int_t   MPDGEMPlane::Begin( THaRunBase* run ){
     TreeSearch::GEMPlane::Begin(run);
@@ -412,52 +600,52 @@ Int_t   MPDGEMPlane::End( THaRunBase* run ){
 }
 
 MPDStripData_t MPDGEMPlane::ChargeDep( const std::vector<Float_t>& amp ) {
-  // Deconvolute signal given by samples in 'amp', return approximate integral.
-  // Currently analyzes exactly 3 samples.
-  // From Kalyan Allada
-  // NIM A326, 112 (1993)
+    // Deconvolute signal given by samples in 'amp', return approximate integral.
+    // Currently analyzes exactly 3 samples.
+    // From Kalyan Allada
+    // NIM A326, 112 (1993)
 
-  //FIXME: from database, proper value for Tp
-  const Float_t delta_t = 25.0; // time interval between samples (ns)
-  const Float_t Tp      = 50.0; // RC filter time constant (ns)
+    //FIXME: from database, proper value for Tp
+    const Float_t delta_t = 25.0; // time interval between samples (ns)
+    const Float_t Tp      = 50.0; // RC filter time constant (ns)
 
-  assert( amp.size() >= 3 );
+    assert( amp.size() >= 3 );
 
-  Float_t adcraw = delta_t*(amp[0]+amp[1]+amp[2]);
+    Float_t adcraw = delta_t*(amp[0]+amp[1]+amp[2]);
 
-  // Weight factors calculated based on the response of the silicon microstrip
-  // detector:
-  // v(t) = (delta_t/Tp)*exp(-delta_t/Tp)
-  // Need to update this for GEM detector response(?):
-  // v(t) = A*(1-exp(-(t-t0)/tau1))*exp(-(t-t0)/tau2)
-  // where A is the amplitude, t0 the begin of the rise, tau1 the time
-  // parameter for the rising edge and tau2 the for the falling edge.
+    // Weight factors calculated based on the response of the silicon microstrip
+    // detector:
+    // v(t) = (delta_t/Tp)*exp(-delta_t/Tp)
+    // Need to update this for GEM detector response(?):
+    // v(t) = A*(1-exp(-(t-t0)/tau1))*exp(-(t-t0)/tau2)
+    // where A is the amplitude, t0 the begin of the rise, tau1 the time
+    // parameter for the rising edge and tau2 the for the falling edge.
 
-  Float_t x = delta_t/Tp;
+    Float_t x = delta_t/Tp;
 
-  Float_t w1 = TMath::Exp(x-1)/x;
-  Float_t w2 = -2*TMath::Exp(-1)/x;
-  Float_t w3 = TMath::Exp(-x-1)/x;
+    Float_t w1 = TMath::Exp(x-1)/x;
+    Float_t w2 = -2*TMath::Exp(-1)/x;
+    Float_t w3 = TMath::Exp(-x-1)/x;
 
-  // Deconvoluted signal samples, assuming measurements of zero before the
-  // leading edge
-  Float_t sig[3] = { amp[0]*w1,
-		     amp[1]*w1+amp[0]*w2,
-		     amp[2]*w1+amp[1]*w2+amp[0]*w3 };
+    // Deconvoluted signal samples, assuming measurements of zero before the
+    // leading edge
+    Float_t sig[3] = { amp[0]*w1,
+        amp[1]*w1+amp[0]*w2,
+        amp[2]*w1+amp[1]*w2+amp[0]*w3 };
 
-  Float_t adc    = delta_t*(sig[0]+sig[1]+sig[2]);
-  Float_t time   = 0;     // TODO
+    Float_t adc    = delta_t*(sig[0]+sig[1]+sig[2]);
+    Float_t time   = 0;     // TODO
 
-  Bool_t pass;
-  // Calculate ratios for 3 samples and check for bad signals
-  if( amp[2] > 0 ) {
-    Float_t r1 = amp[0]/amp[2];
-    Float_t r2 = amp[1]/amp[2];
-    pass = (r1 < 1.0 and r2 < 1.0 and r1 < r2);
-  } else
-    pass = false;
+    Bool_t pass;
+    // Calculate ratios for 3 samples and check for bad signals
+    if( amp[2] > 0 ) {
+        Float_t r1 = amp[0]/amp[2];
+        Float_t r2 = amp[1]/amp[2];
+        pass = (r1 < 1.0 and r2 < 1.0 and r1 < r2);
+    } else
+        pass = false;
 
-  return MPDStripData_t(adcraw,adc,time,pass);
+    return MPDStripData_t(adcraw,adc,time,pass);
 }
 
 

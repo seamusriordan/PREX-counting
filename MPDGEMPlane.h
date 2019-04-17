@@ -80,6 +80,8 @@ class MPDGEMPlane : public TreeSearch::GEMPlane {
         Double_t GetHitTime( Int_t [] ){ return 0.0; }
 
         MPDStripData_t ChargeDep(const std::vector<Float_t>&);
+
+        Int_t FindGEMHits();
   
         ClassDef(MPDGEMPlane,0)
 
