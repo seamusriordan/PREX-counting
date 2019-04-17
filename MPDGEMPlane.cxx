@@ -2,27 +2,33 @@
 #include "MPDGEMPlane.h"
 #include "TDatime.h"
 #include "THaEvData.h"
+#include <vector>
+
 
 
 MPDGEMPlane::MPDGEMPlane( const char *name, const char *description,
     THaDetectorBase* parent ):
     GEMPlane(name,description,parent),
 //    nch(0),fStrip(NULL),fPedestal(NULL),fcommon_mode(NULL),
-    trigger_time(-1),ev_num(-1),fMaxSamp(N_MPD_TIME_SAMP)
+    trigger_time(-1),ev_num(-1)
 {
     // FIXME:  To database
     fZeroSuppress    = kFALSE;
     fZeroSuppressRMS = 5.0;
 
-    for( Int_t i = 0; i < fMaxSamp; i++ ){
+    fMaxSamp = N_MPD_TIME_SAMP;
+
+    for( UInt_t i = 0; i < fMaxSamp; i++ ){
       fADCForm[i] = NULL;
     }
     fADCSum = NULL;
+
+
     return;
 }
 
 MPDGEMPlane::~MPDGEMPlane() {
-    if( fSigStrips ){
+    if( fSigStrips.size() > 0 ){
         fADC0 = NULL;
         fADC1 = NULL;
         fADC2 = NULL;
@@ -30,7 +36,7 @@ MPDGEMPlane::~MPDGEMPlane() {
         fADC4 = NULL;
         fADC5 = NULL;
 	fADCSum = NULL;
-        for( Int_t i = 0; i < fMaxSamp; i++ ){
+        for( UInt_t i = 0; i < fMaxSamp; i++ ){
             delete fADCForm[i];
             fADCForm[i] = NULL;
         }
@@ -71,8 +77,8 @@ Int_t MPDGEMPlane::ReadDatabase( const TDatime& date ){
 
     fclose(file);
 
-    Int_t nentry = fChanMapData.size()/MPDMAP_ROW_SIZE;
-    for( Int_t mapline = 0; mapline < nentry; mapline++ ){
+    UInt_t nentry = fChanMapData.size()/MPDMAP_ROW_SIZE;
+    for( UInt_t mapline = 0; mapline < nentry; mapline++ ){
         mpdmap_t thisdata;
         thisdata.crate  = fChanMapData[0+mapline*MPDMAP_ROW_SIZE];
         thisdata.slot   = fChanMapData[1+mapline*MPDMAP_ROW_SIZE];
@@ -87,40 +93,31 @@ Int_t MPDGEMPlane::ReadDatabase( const TDatime& date ){
 
     std::cout << fName << " mapped to " << nentry << " APV25 chips" << std::endl;
 
-    // FIXME:  make sure to delete if already initialized
-    fStrip    = new Int_t [N_APV25_CHAN*nentry];
-    
-    for( Int_t i = 0; i < fMaxSamp; i++ ){
-        fadc[i] = new Int_t [N_APV25_CHAN*nentry];
-        for( Int_t j = 0; j < fMaxSamp; j++ ){
-            fadc[i][j] = 0.0;
+    for( UInt_t i = 0; i < fMaxSamp; i++ ){
+        fADCForm[i] = new Int_t [N_APV25_CHAN*nentry];
+        for( UInt_t j = 0; j < fMaxSamp; j++ ){
+            fADCForm[i][j] = 0.0;
         }
     }
-    fadc0 = fadc[0];
-    fadc1 = fadc[1];
-    fadc2 = fadc[2];
-    fadc3 = fadc[3];
-    fadc4 = fadc[4];
-    fadc5 = fadc[5];
+    fADC0 = fADCForm[0];
+    fADC1 = fADCForm[1];
+    fADC2 = fADCForm[2];
+    fADC3 = fADCForm[3];
+    fADC4 = fADCForm[4];
+    fADC5 = fADCForm[5];
 
     fADCSum = new Int_t[N_APV25_CHAN*nentry];
-    fcommon_mode = new Int_t[N_APV25_CHAN*nentry];
+//    fcommon_mode = new Int_t[N_APV25_CHAN*nentry];
 
-    fPedestal = new Double_t [N_APV25_CHAN*nentry];
-    fRMS      = new Double_t [N_APV25_CHAN*nentry];
-
-    for( Int_t i = 0; i < N_APV25_CHAN*nentry; i++ ){
-      fPedestal[i] = 0.0;
-      fRMS[i] = 0.0;
-    }
-
+    fPed.clear();
+    fRMS.clear();
 
     for( UInt_t i = 0; i < rawped.size(); i++ ){
         if( (i % 2) == 1 ) continue;
-        int idx = (int) rawped[i];
+        UInt_t idx = (UInt_t) rawped[i];
 	
-    	if( idx < N_APV25_CHAN*nentry ){
-    		fPedestal[idx] = rawped[i+1];
+    	if( idx < N_APV25_CHAN*nentry && fPed.size() == idx ){
+    		fPed.push_back(rawped[i+1]);
     	} else {
 		
     	    std::cout << "[MPDGEMPlane::ReadDatabase]  WARNING: " << " strip " << idx  << " listed but not enough strips in cratemap" << std::endl;
@@ -129,9 +126,9 @@ Int_t MPDGEMPlane::ReadDatabase( const TDatime& date ){
 
     for( UInt_t i = 0; i < rawrms.size(); i++ ){
         if( (i % 2) == 1 ) continue;
-        int idx = (int) rawrms[i];
-	if( idx < N_APV25_CHAN*nentry ){
-		fRMS[idx] = rawrms[i+1];
+        UInt_t idx = (UInt_t) rawrms[i];
+	if( idx < N_APV25_CHAN*nentry && fRMS.size() == idx ){
+		fRMS.push_back(rawrms[i+1]);
 	} else {
 	    std::cout << "[MPDGEMPlane::ReadDatabase]  WARNING: " << " strip " << idx  << " listed but not enough strips in cratemap" << std::endl;
 	}
@@ -240,7 +237,7 @@ Int_t MPDGEMPlane::Decode( const THaEvData& evdata ){
             if( chan != effChan ) continue; // not part of this detector
 
 
-            Int_t nsamp = evdata.GetNumHits( it->crate, it->slot, chan );
+            UInt_t nsamp = evdata.GetNumHits( it->crate, it->slot, chan );
 
             //std::cout << fName << " MPD " << it->mpd_id << " ADC " << it->adc_id << " found " << nsamp << std::endl;
             //std::cout << nsamp << " samples detected (" << nsamp/N_APV25_CHAN <<  ")" << std::endl;
@@ -248,7 +245,6 @@ Int_t MPDGEMPlane::Decode( const THaEvData& evdata ){
             assert( nsamp == N_APV25_CHAN*fMaxSamp );
 	    
 	    Double_t arrADCSum[128]; // Copy of ADC sum for CMN Calculation
-	    Int_t arrnch[128]; // Copy of nch for CMN Calculation
 
             Int_t nchStartOfAPV = nch;
             for( Int_t strip = 0; strip < N_APV25_CHAN; ++strip ) {
@@ -264,13 +260,13 @@ Int_t MPDGEMPlane::Decode( const THaEvData& evdata ){
                 Vflt_t samples;
                 samples.clear();
 		
-                for( Int_t adc_samp = 0; adc_samp < fMaxSamp; adc_samp++ ){
-                    int isamp = adc_samp*N_APV25_CHAN + strip;
+                for( UInt_t adc_samp = 0; adc_samp < fMaxSamp; adc_samp++ ){
+                    UInt_t isamp = adc_samp*N_APV25_CHAN + strip;
 
                     assert(isamp < nsamp);
 
                     Int_t rawadc =  evdata.GetData(it->crate, it->slot, chan, isamp);
-                    fADCForm[adc_samp][nch] = rawadc - fPedestal[RstripPos];
+                    fADCForm[adc_samp][nch] = rawadc - fPed[RstripPos];
 		    fADCSum[nch] += fADCForm[adc_samp][nch];
                     assert( ((UInt_t) nch) < fMPDmap.size()*N_APV25_CHAN ); 
 
@@ -278,11 +274,10 @@ Int_t MPDGEMPlane::Decode( const THaEvData& evdata ){
 		    // Note fMPDmap.size() equals to Number of APV Cards
                 }
 
-                StripData_t stripdata = ChargeDep(samples);
+                MPDStripData_t stripdata = ChargeDep(samples);
 
 		// copy adc sum and its fNCH
 		arrADCSum[strip] = fADCSum[nch];
-		arrnch[strip] = nch;
 
                 ++fNrawStrips;
                 ++fNhitStrips;
@@ -297,8 +292,8 @@ Int_t MPDGEMPlane::Decode( const THaEvData& evdata ){
 
                 // Zero suppression
                 if( !fZeroSuppress ||  
-                        fRMS[RstripPos] > 0.0 && fabs(fADCForm[2][nch])/fRMS[RstripPos] > fZeroSuppressRMS ){
-                    fSigStrips.push_back(RstripPos)
+                       ( fRMS[RstripPos] > 0.0 && fabs(fADCForm[2][nch])/fRMS[RstripPos] > fZeroSuppressRMS) ){
+                    fSigStrips.push_back(RstripPos);
                     nch++;
                 }
             }// End Strip Loop
@@ -330,13 +325,13 @@ Int_t MPDGEMPlane::Decode( const THaEvData& evdata ){
 
             // Correct superclass' variables for common mode noise
 	    for(Int_t strip=0; strip<N_APV25_CHAN;++strip){
-                RstripPos = GetRStripNumber( strip, it->pos, it->invert );
+                UInt_t RstripPos = GetRStripNumber( strip, it->pos, it->invert );
                 fADCcor[RstripPos] -= fPed[RstripPos] + cm_noise;
 	    }
 
             // Correct this class' variables for common mode noise
 	    for(Int_t ch= nchStartOfAPV; ch < nch; ch++){
-                for( Int_t adc_samp = 0; adc_samp < fMaxSamp; adc_samp++ ){
+                for( UInt_t adc_samp = 0; adc_samp < fMaxSamp; adc_samp++ ){
                     fADCForm[adc_samp][ch] -= cm_noise;
                 }
                 fADCSum[nch] -= cm_noise*fMaxSamp;
@@ -372,6 +367,53 @@ Int_t   MPDGEMPlane::End( THaRunBase* run ){
     return 0;
 }
 
+MPDStripData_t MPDGEMPlane::ChargeDep( const std::vector<Float_t>& amp ) {
+  // Deconvolute signal given by samples in 'amp', return approximate integral.
+  // Currently analyzes exactly 3 samples.
+  // From Kalyan Allada
+  // NIM A326, 112 (1993)
 
+  //FIXME: from database, proper value for Tp
+  const Float_t delta_t = 25.0; // time interval between samples (ns)
+  const Float_t Tp      = 50.0; // RC filter time constant (ns)
+
+  assert( amp.size() >= 3 );
+
+  Float_t adcraw = delta_t*(amp[0]+amp[1]+amp[2]);
+
+  // Weight factors calculated based on the response of the silicon microstrip
+  // detector:
+  // v(t) = (delta_t/Tp)*exp(-delta_t/Tp)
+  // Need to update this for GEM detector response(?):
+  // v(t) = A*(1-exp(-(t-t0)/tau1))*exp(-(t-t0)/tau2)
+  // where A is the amplitude, t0 the begin of the rise, tau1 the time
+  // parameter for the rising edge and tau2 the for the falling edge.
+
+  Float_t x = delta_t/Tp;
+
+  Float_t w1 = TMath::Exp(x-1)/x;
+  Float_t w2 = -2*TMath::Exp(-1)/x;
+  Float_t w3 = TMath::Exp(-x-1)/x;
+
+  // Deconvoluted signal samples, assuming measurements of zero before the
+  // leading edge
+  Float_t sig[3] = { amp[0]*w1,
+		     amp[1]*w1+amp[0]*w2,
+		     amp[2]*w1+amp[1]*w2+amp[0]*w3 };
+
+  Float_t adc    = delta_t*(sig[0]+sig[1]+sig[2]);
+  Float_t time   = 0;     // TODO
+
+  Bool_t pass;
+  // Calculate ratios for 3 samples and check for bad signals
+  if( amp[2] > 0 ) {
+    Float_t r1 = amp[0]/amp[2];
+    Float_t r2 = amp[1]/amp[2];
+    pass = (r1 < 1.0 and r2 < 1.0 and r1 < r2);
+  } else
+    pass = false;
+
+  return MPDStripData_t(adcraw,adc,time,pass);
+}
 
 

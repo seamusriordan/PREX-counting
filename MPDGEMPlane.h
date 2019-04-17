@@ -2,6 +2,7 @@ class THaDetectorBase;
 class THaEvData;
 class THaRunBase;
 
+#include <vector>
 #include "GEMPlane.h"
 
 struct mpdmap_t {
@@ -14,6 +15,17 @@ struct mpdmap_t {
     UInt_t pos;
     UInt_t invert;
 };
+
+struct MPDStripData_t {
+    Float_t adcraw;
+    Float_t adc;
+    Float_t time;
+    Bool_t  pass;
+    MPDStripData_t() : adcraw(0), adc(0), time(0), pass(false) {}
+    MPDStripData_t( Float_t _raw, Float_t _adc, Float_t _time, Bool_t _pass )
+        : adcraw(_raw), adc(_adc), time(_time), pass(_pass) {}
+};
+
 
 #define N_APV25_CHAN    128
 #define N_MPD_TIME_SAMP 6
@@ -60,16 +72,19 @@ class MPDGEMPlane : public TreeSearch::GEMPlane {
 	Int_t *fADCSum; //[fNch] // copy of fADC organized by signal
 //        Double_t *fPedestal;  // Duplicated by fPedestal
 //  	Int_t *fcommon_mode; //[fNch] // Duplicated by fDnoise
-        Double_t *fRMS;
+        Vflt_t fRMS;
         Double_t trigger_time;
         Int_t ev_num;
 
         Int_t GetRStripNumber( UInt_t , UInt_t , UInt_t );
         Double_t GetHitTime( Int_t [] ){ return 0.0; }
+
+        MPDStripData_t ChargeDep(const std::vector<Float_t>&);
   
         ClassDef(MPDGEMPlane,0)
 
 };
+
 
 
 
