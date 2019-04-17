@@ -32,7 +32,6 @@ class MPDGEMPlane : public TreeSearch::GEMPlane {
 
         virtual void    Clear( Option_t* opt="" );
         virtual Int_t   Decode( const THaEvData& );
-        virtual void    Print( Option_t* opt="" ) const;
 
         virtual Int_t   ReadDatabase(const TDatime& );
         virtual Int_t   DefineVariables( EMode mode );
@@ -48,22 +47,25 @@ class MPDGEMPlane : public TreeSearch::GEMPlane {
         Bool_t fZeroSuppress;
 
         // Output variables
-        Int_t  fNch;
-        Int_t *fStrip; // [fNch]
-        Int_t *fadc[N_MPD_TIME_SAMP]; 
+//        Int_t  fNch;   // duplicated by fSigStrips.size()
+//        Int_t *fStrip; // [fNch]  // duplicated by fSigStrips
+        Int_t *fADCForm[N_MPD_TIME_SAMP]; 
         // Being obnoxious so we match the stand alone more closely
-        Int_t *fadc0; // [fNch]
-        Int_t *fadc1; // [fNch]
-        Int_t *fadc2; // [fNch]
-        Int_t *fadc3; // [fNch]
-        Int_t *fadc4; // [fNch]
-        Int_t *fadc5; // [fNch]
-	Int_t *fadc_sum; //[fNch]
-        Double_t *fPedestal;
-  	Int_t *fcommon_mode; //[fNch]
+        Int_t *fADC0; // [fNch]
+        Int_t *fADC1; // [fNch]
+        Int_t *fADC2; // [fNch]
+        Int_t *fADC3; // [fNch]
+        Int_t *fADC4; // [fNch]
+        Int_t *fADC5; // [fNch]
+	Int_t *fADCSum; //[fNch] // copy of fADC organized by signal
+//        Double_t *fPedestal;  // Duplicated by fPedestal
+//  	Int_t *fcommon_mode; //[fNch] // Duplicated by fDnoise
         Double_t *fRMS;
         Double_t trigger_time;
         Int_t ev_num;
+
+        Int_t GetRStripNumber( UInt_t , UInt_t , UInt_t );
+        Double_t GetHitTime( Int_t [] ){ return 0.0; }
   
         ClassDef(MPDGEMPlane,0)
 

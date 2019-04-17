@@ -7,39 +7,41 @@
 MPDGEMPlane::MPDGEMPlane( const char *name, const char *description,
     THaDetectorBase* parent ):
     GEMPlane(name,description,parent),
-    fNch(0),fStrip(NULL),fPedestal(NULL),fcommon_mode(NULL),
-    trigger_time(-1),ev_num(-1)
+//    nch(0),fStrip(NULL),fPedestal(NULL),fcommon_mode(NULL),
+    trigger_time(-1),ev_num(-1),fMaxSamp(N_MPD_TIME_SAMP)
 {
     // FIXME:  To database
     fZeroSuppress    = kFALSE;
     fZeroSuppressRMS = 5.0;
 
-    for( Int_t i = 0; i < N_MPD_TIME_SAMP; i++ ){
-      fadc[i] = NULL;
+    for( Int_t i = 0; i < fMaxSamp; i++ ){
+      fADCForm[i] = NULL;
     }
-    fadc_sum = NULL;
+    fADCSum = NULL;
     return;
 }
 
 MPDGEMPlane::~MPDGEMPlane() {
-    if( fStrip ){
-        fadc0 = NULL;
-        fadc1 = NULL;
-        fadc2 = NULL;
-        fadc3 = NULL;
-        fadc4 = NULL;
-        fadc5 = NULL;
-	fadc_sum = NULL;
-        for( Int_t i = 0; i < N_MPD_TIME_SAMP; i++ ){
-            delete fadc[i];
-            fadc[i] = NULL;
+    if( fSigStrips ){
+        fADC0 = NULL;
+        fADC1 = NULL;
+        fADC2 = NULL;
+        fADC3 = NULL;
+        fADC4 = NULL;
+        fADC5 = NULL;
+	fADCSum = NULL;
+        for( Int_t i = 0; i < fMaxSamp; i++ ){
+            delete fADCForm[i];
+            fADCForm[i] = NULL;
         }
+        /*
 	delete fcommon_mode;
 	fcommon_mode = NULL;
         delete fPedestal;
         fPedestal = NULL;
         delete fStrip;
         fStrip = NULL;
+        */
 	
     }
 
@@ -88,9 +90,9 @@ Int_t MPDGEMPlane::ReadDatabase( const TDatime& date ){
     // FIXME:  make sure to delete if already initialized
     fStrip    = new Int_t [N_APV25_CHAN*nentry];
     
-    for( Int_t i = 0; i < N_MPD_TIME_SAMP; i++ ){
+    for( Int_t i = 0; i < fMaxSamp; i++ ){
         fadc[i] = new Int_t [N_APV25_CHAN*nentry];
-        for( Int_t j = 0; j < N_MPD_TIME_SAMP; j++ ){
+        for( Int_t j = 0; j < fMaxSamp; j++ ){
             fadc[i][j] = 0.0;
         }
     }
@@ -101,7 +103,7 @@ Int_t MPDGEMPlane::ReadDatabase( const TDatime& date ){
     fadc4 = fadc[4];
     fadc5 = fadc[5];
 
-    fadc_sum = new Int_t[N_APV25_CHAN*nentry];
+    fADCSum = new Int_t[N_APV25_CHAN*nentry];
     fcommon_mode = new Int_t[N_APV25_CHAN*nentry];
 
     fPedestal = new Double_t [N_APV25_CHAN*nentry];
@@ -144,18 +146,40 @@ Int_t MPDGEMPlane::DefineVariables( EMode mode ) {
       fIsSetup = ( mode == kDefine );
 
       RVarDef vars[] = {
-          { "nch",   "Number of channels",   "fNch" },
-          { "strip", "Strip number mapping", "fStrip" },
-          { "adc0", "ADC sample", "fadc0" },
-          { "adc1", "ADC sample", "fadc1" },
-          { "adc2", "ADC sample", "fadc2" },
-          { "adc3", "ADC sample", "fadc3" },
-          { "adc4", "ADC sample", "fadc4" },
-          { "adc5", "ADC sample", "fadc5" },
-          { "adc_sum", "ADC samples sum", "fadc_sum" },
-          { "common_mode", "Common Mode", "fcommon_mode" },
-	  { "trigger_time", "Trigger Time", "trigger_time" },
-	  { "ev_num","event counter","ev_num"},
+          { "nrawstrips",     "nstrips with decoder data",        "fNrawStrips" },
+          { "nhitstrips",     "nstrips > 0",                      "fNhitStrips" },
+          { "nstrips",        "Num strips with hits > adc.min",   "GetNsigStrips()" },
+          { "hitocc",         "strips > 0 / n_all_strips",        "fHitOcc" },
+          { "occupancy",      "nstrips / n_all_strips",           "fOccupancy" },
+          { "strip.adcraw",   "Raw strip ADC sum",                "fADCraw" },
+          { "strip.adc",      "Deconvoluted strip ADC sum",       "fADC" },
+          { "strip.adc_c",    "Pedestal-sub strip ADC sum",       "fADCcor" },
+          { "strip.time",     "Leading time of strip signal (ns)","fHitTime" },
+          { "strip.good",     "Good pulse shape on strip",        "fGoodHit" },
+          { "nhits",          "Num hits (clusters of strips)",    "GetNhits()" },
+          { "noise",          "Noise level (avg below adc.min)",  "fDnoise" },
+          { "ncoords",        "Num fit coords",                   "GetNcoords()" },
+          { "coord.pos",      "Position used in fit (m)",         "fFitCoords.TreeSearch::FitCoord.fPos" },
+          { "coord.trkpos",   "Track pos from projection fit (m)","fFitCoords.TreeSearch::FitCoord.fTrackPos" },
+          { "coord.trkslope", "Track slope from projection fit",  "fFitCoords.TreeSearch::FitCoord.fTrackSlope" },
+          { "coord.resid",    "Residual of trkpos (m)",           "fFitCoords.TreeSearch::FitCoord.GetResidual()" },
+          { "coord.3Dpos",    "Crossing position of fitted 3D track (m)", "fFitCoords.TreeSearch::FitCoord.f3DTrkPos" },
+          { "coord.3Dresid",  "Residual of 3D trkpos (m)",        "fFitCoords.TreeSearch::FitCoord.Get3DTrkResid()" },
+          { "coord.3Dslope",  "Slope of fitted 3D track wrt projection",  "fFitCoords.TreeSearch::FitCoord.f3DTrkSlope" },
+
+
+          //{ "nch",   "Number of channels",   "nch" },
+          { "strip.number", "Strip number mapping", "fSigStrips" },
+          { "adc0", "ADC sample", "fADC0" },
+          { "adc1", "ADC sample", "fADC1" },
+          { "adc2", "ADC sample", "fADC2" },
+          { "adc3", "ADC sample", "fADC3" },
+          { "adc4", "ADC sample", "fADC4" },
+          { "adc5", "ADC sample", "fADC5" },
+          { "adc_sum", "ADC samples sum", "fADCSum" },
+          //{ "common_mode", "Common Mode", "fcommon_mode" },
+          { "trigger_time", "Trigger Time", "trigger_time" },
+          { "ev_num","event counter","ev_num"},
           { 0 },
       };
 
@@ -165,19 +189,32 @@ Int_t MPDGEMPlane::DefineVariables( EMode mode ) {
       if( ret != kOK )
           return ret;
 
+
+      RVarDef nonmcvars[] = {
+          { "hit.pos",  "Hit centroid (m)",      "fHits.TreeSearch::GEMHit.fPos" },
+          { "hit.adc",  "Hit ADC sum",           "fHits.TreeSearch::GEMHit.fADCsum" },
+          { "hit.size", "Num strips ",           "fHits.TreeSearch::GEMHit.fSize" },
+          { "hit.type", "Hit analysis result",   "fHits.TreeSearch::GEMHit.fType" },
+          { 0 }
+      };
+      ret = DefineVarsFromList( nonmcvars, mode );
+
+
       return kOK;
 
 }
 
-void    MPDGEMPlane::Clear( Option_t* ){
-    fNch = 0;
+void MPDGEMPlane::Clear( Option_t* opt ){
+
+    TreeSearch::GEMPlane::Clear(opt);
     return;
 }
 
-Int_t   MPDGEMPlane::Decode( const THaEvData& evdata ){
+Int_t MPDGEMPlane::Decode( const THaEvData& evdata ){
 //    std::cout << "[MPDGEMPlane::Decode " << fName << "]" << std::endl;
 
-    fNch = 0;
+    fNelem = N_APV25_CHAN*fMPDmap.size();
+    Int_t nch = 0;
     for (std::vector<mpdmap_t>::iterator it = fMPDmap.begin() ; it != fMPDmap.end(); ++it){
 
         // Find channel for trigger time first
@@ -208,53 +245,61 @@ Int_t   MPDGEMPlane::Decode( const THaEvData& evdata ){
             //std::cout << fName << " MPD " << it->mpd_id << " ADC " << it->adc_id << " found " << nsamp << std::endl;
             //std::cout << nsamp << " samples detected (" << nsamp/N_APV25_CHAN <<  ")" << std::endl;
 
-            assert( nsamp == N_APV25_CHAN*N_MPD_TIME_SAMP );
+            assert( nsamp == N_APV25_CHAN*fMaxSamp );
 	    
 	    Double_t arrADCSum[128]; // Copy of ADC sum for CMN Calculation
-	    Int_t arrfNch[128]; // Copy of fNch for CMN Calculation
+	    Int_t arrnch[128]; // Copy of nch for CMN Calculation
+
+            Int_t nchStartOfAPV = nch;
             for( Int_t strip = 0; strip < N_APV25_CHAN; ++strip ) {
                 // data is packed like this
                 // [ts1 of 128 chan] [ts2 of 128chan] ... [ts6 of 128chan]
-                
-                // Madness....   copy pasted from stand alone decoder
-                // I bet there's a more elegant way to express this
-
-                // Int_t RstripNb= 32*(strip%4)+ 8*(int)(strip/4)- 31*(int)(strip/16);
-                // RstripNb=RstripNb+1+RstripNb%4-5*(((int)(RstripNb/4))%2);
 	      
-	        // New: Use a pre-computed array from Danning to skip the above two steps.
-		Int_t RstripNb = APVMAP[strip];
-                RstripNb=RstripNb+(127-2*RstripNb)*it->invert;
-                Int_t RstripPos = RstripNb + 128*it->pos;
+                Int_t RstripPos = GetRStripNumber( strip, it->pos, it->invert );
 
-/*
-                if( it->adc_id == 10 ){
-                std::cout << "ADC " << it->adc_id << " final strip pos: " << RstripPos << std::endl;
-                }
-*/
+//                fStrip[nch] = RstripPos;
+		
+		fADCSum[nch] = 0;
 
-                fStrip[fNch] = RstripPos;
+                Vflt_t samples;
+                samples.clear();
 		
-		fadc_sum[fNch] = 0;
-		
-                for( Int_t adc_samp = 0; adc_samp < N_MPD_TIME_SAMP; adc_samp++ ){
+                for( Int_t adc_samp = 0; adc_samp < fMaxSamp; adc_samp++ ){
                     int isamp = adc_samp*N_APV25_CHAN + strip;
 
                     assert(isamp < nsamp);
 
-                    fadc[adc_samp][fNch] =  evdata.GetData(it->crate, it->slot, chan, isamp) -
-                                            fPedestal[RstripPos];
-		    fadc_sum[fNch] += fadc[adc_samp][fNch];
-                    assert( ((UInt_t) fNch) < fMPDmap.size()*N_APV25_CHAN ); 
+                    Int_t rawadc =  evdata.GetData(it->crate, it->slot, chan, isamp);
+                    fADCForm[adc_samp][nch] = rawadc - fPedestal[RstripPos];
+		    fADCSum[nch] += fADCForm[adc_samp][nch];
+                    assert( ((UInt_t) nch) < fMPDmap.size()*N_APV25_CHAN ); 
+
+                    samples.push_back((Float_t) rawadc);
 		    // Note fMPDmap.size() equals to Number of APV Cards
                 }
+
+                StripData_t stripdata = ChargeDep(samples);
+
 		// copy adc sum and its fNCH
-		arrADCSum[strip] = fadc_sum[fNch];
-		arrfNch[strip] = fNch;
+		arrADCSum[strip] = fADCSum[nch];
+		arrnch[strip] = nch;
+
+                ++fNrawStrips;
+                ++fNhitStrips;
+
+                fADCraw[RstripPos]  = stripdata.adcraw;
+                fADC[RstripPos]     = stripdata.adc;
+                fHitTime[RstripPos] = stripdata.time;
+                fGoodHit[RstripPos] = stripdata.pass;
+
+                fADCcor[RstripPos]  = stripdata.adc;
+
+
                 // Zero suppression
                 if( !fZeroSuppress ||  
-                      ( fRMS[RstripPos] > 0.0 && fabs(fadc[2][fNch])/fRMS[RstripPos] > fZeroSuppressRMS ) ){
-                    fNch++;
+                        fRMS[RstripPos] > 0.0 && fabs(fADCForm[2][nch])/fRMS[RstripPos] > fZeroSuppressRMS ){
+                    fSigStrips.push_back(RstripPos)
+                    nch++;
                 }
             }// End Strip Loop
 
@@ -280,32 +325,53 @@ Int_t   MPDGEMPlane::Decode( const THaEvData& evdata ){
 		std::cout << "Sorting went Wrong ! " << std::endl;
 	      cm_noise += arrADCSum[strip];
 	    }
-	    cm_noise = cm_noise/ n_cmn / N_MPD_TIME_SAMP; // averaged to each sample
+	    cm_noise = cm_noise/ n_cmn / fMaxSamp; // averaged to each sample
+            fDnoise = cm_noise;
 
-	    // Write to fcommon_mode[fNch] array
+            // Correct superclass' variables for common mode noise
 	    for(Int_t strip=0; strip<N_APV25_CHAN;++strip){
-	      fcommon_mode[ arrfNch[strip] ] = cm_noise;  
-	      // Defined as the same for all channels in one APV
+                RstripPos = GetRStripNumber( strip, it->pos, it->invert );
+                fADCcor[RstripPos] -= fPed[RstripPos] + cm_noise;
 	    }
+
+            // Correct this class' variables for common mode noise
+	    for(Int_t ch= nchStartOfAPV; ch < nch; ch++){
+                for( Int_t adc_samp = 0; adc_samp < fMaxSamp; adc_samp++ ){
+                    fADCForm[adc_samp][ch] -= cm_noise;
+                }
+                fADCSum[nch] -= cm_noise*fMaxSamp;
+            }
 
         }// End ichan loop: nchan = total APVs 
 
     }
 
-//    std::cout << fName << " channels found  " << fNch << std::endl;
+    fHitOcc    = static_cast<Double_t>(fNhitStrips) / fNelem;
+    fOccupancy = static_cast<Double_t>(GetNsigStrips()) / fNelem;
+
+//    std::cout << fName << " channels found  " << nch << std::endl;
 
     return 0;
 }
 
-void    MPDGEMPlane::Print( Option_t* ) const{
-    return;
+Int_t MPDGEMPlane::GetRStripNumber( UInt_t strip, UInt_t pos, UInt_t invert ){
+    Int_t RstripNb = APVMAP[strip];
+    RstripNb=RstripNb+(127-2*RstripNb)*invert;
+    Int_t RstripPos = RstripNb + 128*pos;
+
+    return RstripPos;
 }
 
-Int_t   MPDGEMPlane::Begin( THaRunBase* ){
+Int_t   MPDGEMPlane::Begin( THaRunBase* run ){
+    TreeSearch::GEMPlane::Begin(run);
     return 0;
 }
 
-Int_t   MPDGEMPlane::End( THaRunBase* ){
+Int_t   MPDGEMPlane::End( THaRunBase* run ){
+    TreeSearch::GEMPlane::End(run);
     return 0;
 }
+
+
+
 
