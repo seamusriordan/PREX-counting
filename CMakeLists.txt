@@ -18,7 +18,7 @@ endif()
 
 ##----------------------------------------------------------------------------
 ## Set the sources which have a corresponding .h file here
-set(sources GEMStand.cxx GEMPlane.cxx MPDModule.cxx) 
+set(sources GEMStand.cxx GEMPlane.cxx MPDModule.cxx PREXStand.cxx) 
 ## Make corresponding header files
 string(REGEX REPLACE .cxx .h headers "${sources}")
 ## Append a few extra header files in the repository.  (But do not append the
