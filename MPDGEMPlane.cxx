@@ -57,18 +57,45 @@ MPDGEMPlane::~MPDGEMPlane() {
 Int_t MPDGEMPlane::ReadDatabase( const TDatime& date ){
     std::cout << "[MPDGEMPlane::ReadDatabase]" << std::endl;
 
+    // Read the database for the base class, quit if error
+    Int_t status = ReadDatabaseCommon(date);
+    if( status != kOK )
+        return status;
+
     Int_t err;
 
     FILE* file = OpenFile( date );
     if( !file ) return kFileError;
 
+    TString mapping;
+    fMaxClusterSize = kMaxUInt;
+    fMinAmpl   = 0.0;
+    fSplitFrac = 0.0;
+    fMapType   = kOneToOne;
+    fMaxSamp   = 1;
+    fChanMap.clear();
+    fPed.clear();
+    fAmplSigma = 0.36; // default, an educated guess
+
+
     std::vector<Double_t> rawped;
     std::vector<Double_t> rawrms;
+
+    Int_t gbl = GetDBSearchLevel(fPrefix);
 
     const DBRequest request[] = {
         { "chanmap",        &fChanMapData,  kIntV,    0, 0},
         { "ped",            &rawped,        kDoubleV, 0, 1},
         { "rms",            &rawrms,        kDoubleV, 0, 1},
+
+        { "strip.pos",      &fStart },
+        { "strip.pitch",    &fPitch,          kDouble,  0, 0, gbl },
+        { "maxclustsiz",    &fMaxClusterSize, kUInt,    0, 1, gbl },
+        { "maxsamp",        &fMaxSamp,        kUInt,    0, 1, gbl },
+        { "adc.min",        &fMinAmpl,        kDouble,  0, 1, gbl },
+        { "split.frac",     &fSplitFrac,      kDouble,  0, 1, gbl },
+        { "mapping",        &mapping,         kTString, 0, 1, gbl },
+
         {}
     };
     err = LoadDB( file, date, request, fPrefix );
@@ -91,10 +118,18 @@ Int_t MPDGEMPlane::ReadDatabase( const TDatime& date ){
         fMPDmap.push_back(thisdata);
     }
 
+    fNelem = N_APV25_CHAN*fMPDmap.size();
+
+    SafeDelete(fADCraw);
+    SafeDelete(fADC);
+    SafeDelete(fHitTime);
+    SafeDelete(fADCcor);
+    SafeDelete(fGoodHit);
+
     std::cout << fName << " mapped to " << nentry << " APV25 chips" << std::endl;
 
     for( UInt_t i = 0; i < fMaxSamp; i++ ){
-        fADCForm[i] = new Int_t [N_APV25_CHAN*nentry];
+        fADCForm[i] = new Int_t [fNelem];
         for( UInt_t j = 0; j < fMaxSamp; j++ ){
             fADCForm[i][j] = 0.0;
         }
@@ -106,7 +141,7 @@ Int_t MPDGEMPlane::ReadDatabase( const TDatime& date ){
     fADC4 = fADCForm[4];
     fADC5 = fADCForm[5];
 
-    fADCSum = new Int_t[N_APV25_CHAN*nentry];
+    fADCSum = new Int_t[fNelem];
 //    fcommon_mode = new Int_t[N_APV25_CHAN*nentry];
 
     fPed.clear();
@@ -116,7 +151,7 @@ Int_t MPDGEMPlane::ReadDatabase( const TDatime& date ){
         if( (i % 2) == 1 ) continue;
         UInt_t idx = (UInt_t) rawped[i];
 	
-    	if( idx < N_APV25_CHAN*nentry && fPed.size() == idx ){
+    	if( idx < (UInt_t) fNelem && fPed.size() == idx ){
     		fPed.push_back(rawped[i+1]);
     	} else {
 		
@@ -127,12 +162,22 @@ Int_t MPDGEMPlane::ReadDatabase( const TDatime& date ){
     for( UInt_t i = 0; i < rawrms.size(); i++ ){
         if( (i % 2) == 1 ) continue;
         UInt_t idx = (UInt_t) rawrms[i];
-	if( idx < N_APV25_CHAN*nentry && fRMS.size() == idx ){
+	if( idx < ((UInt_t) fNelem) && fRMS.size() == idx ){
 		fRMS.push_back(rawrms[i+1]);
 	} else {
 	    std::cout << "[MPDGEMPlane::ReadDatabase]  WARNING: " << " strip " << idx  << " listed but not enough strips in cratemap" << std::endl;
 	}
     }
+
+    fADCraw = new Float_t[fNelem];
+    fADC = new Float_t[fNelem];
+    fHitTime = new Float_t[fNelem];
+    fADCcor = new Float_t[fNelem];
+    fGoodHit = new Byte_t[fNelem];
+    fSigStrips.reserve(fNelem);
+    fStripsSeen.resize(fNelem);
+
+
 
 
     return 0;
@@ -210,7 +255,6 @@ void MPDGEMPlane::Clear( Option_t* opt ){
 Int_t MPDGEMPlane::Decode( const THaEvData& evdata ){
 //    std::cout << "[MPDGEMPlane::Decode " << fName << "]" << std::endl;
 
-    fNelem = N_APV25_CHAN*fMPDmap.size();
     Int_t nch = 0;
     for (std::vector<mpdmap_t>::iterator it = fMPDmap.begin() ; it != fMPDmap.end(); ++it){
 
@@ -268,7 +312,7 @@ Int_t MPDGEMPlane::Decode( const THaEvData& evdata ){
                     Int_t rawadc =  evdata.GetData(it->crate, it->slot, chan, isamp);
                     fADCForm[adc_samp][nch] = rawadc - fPed[RstripPos];
 		    fADCSum[nch] += fADCForm[adc_samp][nch];
-                    assert( ((UInt_t) nch) < fMPDmap.size()*N_APV25_CHAN ); 
+                    assert( nch < fNelem ); 
 
                     samples.push_back((Float_t) rawadc);
 		    // Note fMPDmap.size() equals to Number of APV Cards
