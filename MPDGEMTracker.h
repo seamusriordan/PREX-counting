@@ -1,10 +1,10 @@
-#ifndef GEMSTAND_H
-#define GEMSTAND_H
+#ifndef MPDGEMTRACKER_H
+#define MPDGEMTRACKER_H
 #include <GEMTracker.h>
 
 namespace TreeSearch {
     class Plane;
-}
+};
 
 class MPDGEMTracker : public TreeSearch::GEMTracker {
     public:

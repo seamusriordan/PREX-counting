@@ -1,8 +1,8 @@
 #------------------------------------------------------------------------------
 # Core library
-SRC = MPDModule.cxx GEMStand.cxx GEMPlane.cxx 
+SRC = MPDModule.cxx MPDGEMTracker.cxx MPDGEMPlane.cxx 
 
-EXTRAHDR = MPDModule.h GEMStand.h GEMPlane.h
+EXTRAHDR = MPDModule.h MPDGEMTracker.h MPDGEMPlane.h
 
 CORE = prexCounting
 

@@ -1,20 +1,22 @@
 #include <iostream>
 #include <string>
 
-#include "GEMTracker.h"
-#include "GEMPlane.h"
+#include "MPDGEMTracker.h"
+#include "MPDGEMPlane.h"
 
-GEMTracker::GEMTracker( const char* name, const char* desc, THaApparatus* app ):
+#include "Plane.h"
+
+MPDGEMTracker::MPDGEMTracker( const char* name, const char* desc, THaApparatus* app ):
     TreeSearch::GEMTracker(name,desc,app) {
 }
 
-GEMTracker::~GEMTracker(){
+MPDGEMTracker::~MPDGEMTracker(){
     return;
 }
 
 
-virtual TreeSearch::Plane* MakePlane( const char* name, const char* description = "",
-        THaDetectorBase* parent = 0 ) const {
-    return new GEMPlane( name, description, parent );
+TreeSearch::Plane* MPDGEMTracker::MakePlane( const char* name, const char* description,
+        THaDetectorBase* parent  ) const {
+    return new MPDGEMPlane( name, description, parent );
 }
 

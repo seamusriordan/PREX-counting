@@ -6,7 +6,7 @@
 
 MPDGEMPlane::MPDGEMPlane( const char *name, const char *description,
     THaDetectorBase* parent ):
-    THaSubDetector(name,description,parent),
+    GEMPlane(name,description,parent),
     fNch(0),fStrip(NULL),fPedestal(NULL),fcommon_mode(NULL),
     trigger_time(-1),ev_num(-1)
 {

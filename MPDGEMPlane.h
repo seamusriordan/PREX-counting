@@ -1,11 +1,8 @@
-
 class THaDetectorBase;
 class THaEvData;
 class THaRunBase;
 
-namespace TreeSearch {
-    class GEMPlane;
-};
+#include "GEMPlane.h"
 
 struct mpdmap_t {
     UInt_t crate;
