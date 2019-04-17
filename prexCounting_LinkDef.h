@@ -11,4 +11,5 @@
 #pragma link C++ class Decoder::MPDModule+;
 #pragma link C++ class MPDGEMTracker+;
 #pragma link C++ class MPDGEMPlane+;
+#pragma link C++ class PREXStand+;
 #endif

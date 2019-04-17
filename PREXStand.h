@@ -16,3 +16,5 @@ class PREXStand : public THaSpectrometer {
     ClassDef(PREXStand,0) // BigBite spectrometer
 };
 
+#endif
+
