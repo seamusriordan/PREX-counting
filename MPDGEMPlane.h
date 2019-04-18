@@ -82,7 +82,7 @@ class MPDGEMPlane : public TreeSearch::GEMPlane {
         MPDStripData_t ChargeDep(const std::vector<Float_t>&);
 
         Int_t FindGEMHits();
-  
+
         ClassDef(MPDGEMPlane,0)
 
 };

@@ -61,6 +61,7 @@ Int_t MPDGEMPlane::ReadDatabase( const TDatime& date ){
     std::cout << "[MPDGEMPlane::ReadDatabase]" << std::endl;
 
     // Read the database for the base class, quit if error
+
     Int_t status = ReadDatabaseCommon(date);
     if( status != kOK )
         return status;
@@ -75,7 +76,7 @@ Int_t MPDGEMPlane::ReadDatabase( const TDatime& date ){
     fMinAmpl   = 0.0;
     fSplitFrac = 0.0;
     fMapType   = kOneToOne;
-    fMaxSamp   = 1;
+    fMaxSamp   = 6;
     fChanMap.clear();
     fPed.clear();
     fAmplSigma = 0.36; // default, an educated guess
@@ -161,6 +162,9 @@ Int_t MPDGEMPlane::ReadDatabase( const TDatime& date ){
     	    std::cout << "[MPDGEMPlane::ReadDatabase]  WARNING: " << " strip " << idx  << " listed but not enough strips in cratemap" << std::endl;
     	}
     }
+    for( UInt_t i = 0; i < fNelem-rawped.size(); i++ ){
+        fPed.push_back(0);
+    }
 
     for( UInt_t i = 0; i < rawrms.size(); i++ ){
         if( (i % 2) == 1 ) continue;
@@ -171,6 +175,9 @@ Int_t MPDGEMPlane::ReadDatabase( const TDatime& date ){
 	    std::cout << "[MPDGEMPlane::ReadDatabase]  WARNING: " << " strip " << idx  << " listed but not enough strips in cratemap" << std::endl;
 	}
     }
+    for( UInt_t i = 0; i < fNelem-rawrms.size(); i++ ){
+        fRMS.push_back(0);
+    }
 
     fADCraw = new Float_t[fNelem];
     fADC = new Float_t[fNelem];
@@ -179,8 +186,6 @@ Int_t MPDGEMPlane::ReadDatabase( const TDatime& date ){
     fGoodHit = new Byte_t[fNelem];
     fSigStrips.reserve(fNelem);
     fStripsSeen.resize(fNelem);
-
-
 
 
     return 0;
@@ -393,7 +398,7 @@ Int_t MPDGEMPlane::Decode( const THaEvData& evdata ){
 
 //    std::cout << fName << " channels found  " << nch << std::endl;
 
-    return FindGEMHits();
+//    return FindGEMHits();
 }
 
 Int_t MPDGEMPlane::GetRStripNumber( UInt_t strip, UInt_t pos, UInt_t invert ){
