@@ -13,7 +13,8 @@ MPDGEMPlane::MPDGEMPlane( const char *name, const char *description,
     THaDetectorBase* parent ):
     GEMPlane(name,description,parent),
 //    fNch(0),fStrip(NULL),fPedestal(NULL),fcommon_mode(NULL),
-     fNch(0),   fADC0(0), fADC1(0), fADC2(0), fADC3(0), fADC4(0), fADC5(0), fADCSum(0),
+    fDefaultRMS(50.0), fNch(0), fStrip(0), 
+    fADC0(0), fADC1(0), fADC2(0), fADC3(0), fADC4(0), fADC5(0), fADCSum(0),
     trigger_time(-1),ev_num(-1)
 
 {
@@ -43,13 +44,13 @@ MPDGEMPlane::~MPDGEMPlane() {
             delete fADCForm[i];
             fADCForm[i] = NULL;
         }
+        delete fStrip;
+        fStrip = NULL;
         /*
 	delete fcommon_mode;
 	fcommon_mode = NULL;
         delete fPedestal;
         fPedestal = NULL;
-        delete fStrip;
-        fStrip = NULL;
         */
 	
     }
@@ -154,13 +155,14 @@ Int_t MPDGEMPlane::ReadDatabase( const TDatime& date ){
     fADC5 = fADCForm[5];
 
     fADCSum = new Float_t[fNelem];
+    fStrip  = new Int_t[fNelem];
 //    fcommon_mode = new Int_t[N_APV25_CHAN*nentry];
 
     fPed.clear();
     fPed.resize(fNelem, 0.0);
 
     fRMS.clear();
-    fRMS.resize(fNelem, 0.0);
+    fRMS.resize(fNelem, fDefaultRMS);
 
     for( UInt_t i = 0; i < rawped.size(); i++ ){
         if( (i % 2) == 1 ) continue;
@@ -179,7 +181,11 @@ Int_t MPDGEMPlane::ReadDatabase( const TDatime& date ){
         UInt_t idx = (UInt_t) rawrms[i];
 
 	if( idx < ((UInt_t) fNelem) ){
+            if(  fRMS[idx] > 0 ){
 		fRMS[idx] = rawrms[i+1];
+            } else {
+                std::cout << "[MPDGEMPlane::ReadDatabase]  WARNING: " << " strip " << idx  << " has invalid RMS: " << fRMS[idx] << std::endl;
+            }
 	} else {
 	    std::cout << "[MPDGEMPlane::ReadDatabase]  WARNING: " << " strip " << idx  << " listed but not enough strips in cratemap" << std::endl;
 	}
@@ -213,6 +219,8 @@ Int_t MPDGEMPlane::DefineVariables( EMode mode ) {
           { "strip.time",     "Leading time of strip signal (ns)","fHitTime" },
           { "strip.good",     "Good pulse shape on strip",        "fGoodHit" },
           { "strip.number", "Strip number mapping", "fSigStrips" },
+          { "nch", "Number of channels", "fNch" },
+          { "strip_number", "Strip Number", "fStrips" },
           { "adc0", "ADC sample", "fADC0" },
           { "adc1", "ADC sample", "fADC1" },
           { "adc2", "ADC sample", "fADC2" },
@@ -312,7 +320,7 @@ Int_t MPDGEMPlane::Decode( const THaEvData& evdata ){
 	      
                 Int_t RstripPos = GetRStripNumber( strip, it->pos, it->invert );
 
-//                fStrip[fNch] = RstripPos;
+                fStrip[fNch] = RstripPos;
 		
 		fADCSum[fNch] = 0;
 
@@ -349,12 +357,17 @@ Int_t MPDGEMPlane::Decode( const THaEvData& evdata ){
                 fADCcor[RstripPos]  = stripdata.adc;
 
 
+                Bool_t isAboveThreshold = fADCForm[2][fNch]/fRMS[RstripPos] > fZeroSuppressRMS;
+
                 // Zero suppression
-                if( !fZeroSuppress  ||  
-                       ( fRMS[RstripPos] > 0.0 && fabs(fADCForm[2][fNch])/fRMS[RstripPos] > fZeroSuppressRMS) ){
-                    fSigStrips.push_back(RstripPos);
+                if( !fZeroSuppress || isAboveThreshold ){
                     fNch++;
                 }
+
+                if(isAboveThreshold){
+                    fSigStrips.push_back(RstripPos);
+                }
+
             }// End Strip Loop
 
 	    // Common Mode Calculation starts after strip loop -- TY
@@ -491,7 +504,6 @@ Int_t MPDGEMPlane::FindGEMHits(){
             EStep step = kFindMax;
             while( step != kDone and it != next ) {
                 Double_t adc = fADCcor[*it];
-                if( adc < 0.0 ) continue;
 
                 switch( step ) {
                     case kFindMax:

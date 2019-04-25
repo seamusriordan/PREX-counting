@@ -41,7 +41,7 @@ class MPDGEMPlane : public TreeSearch::GEMPlane {
                 THaDetectorBase* parent = 0 );
 
         MPDGEMPlane():
-            fADC0(0), fADC1(0), fADC2(0), fADC3(0), fADC4(0), fADC5(0), fADCSum(0) {}
+            fNch(0), fStrip(0), fADC0(0), fADC1(0), fADC2(0), fADC3(0), fADC4(0), fADC5(0), fADCSum(0) {}
 
         virtual ~MPDGEMPlane();
 
@@ -59,11 +59,12 @@ class MPDGEMPlane : public TreeSearch::GEMPlane {
         std::vector<Int_t>       fChanMapData;
 
         Double_t fZeroSuppressRMS;
-        Bool_t fZeroSuppress;
+        Bool_t   fZeroSuppress;
+        Double_t fDefaultRMS;
 
         // Output variables
-        Int_t  fNch;   // duplicated by fSigStrips.size()
-//        Int_t *fStrip; // [fNch]  // duplicated by fSigStrips
+        Int_t  fNch;   
+        Int_t *fStrip; // [fNch]  
         Int_t *fADCForm[N_MPD_TIME_SAMP]; 
         // Being obnoxious so we match the stand alone more closely
         Int_t *fADC0; // [fNch]
