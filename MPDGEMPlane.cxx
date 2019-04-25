@@ -17,7 +17,6 @@ MPDGEMPlane::MPDGEMPlane( const char *name, const char *description,
     trigger_time(-1),ev_num(-1)
 
 {
-    // FIXME:  To database
     fZeroSuppress    = kFALSE;
     fZeroSuppressRMS = 5.0;
 
@@ -88,6 +87,8 @@ Int_t MPDGEMPlane::ReadDatabase( const TDatime& date ){
 
     Int_t gbl = GetDBSearchLevel(fPrefix);
 
+    Int_t do_noise = 1;
+
     const DBRequest request[] = {
         { "chanmap",        &fChanMapData,  kIntV,    0, 0},
         { "ped",            &rawped,        kDoubleV, 0, 1},
@@ -100,6 +101,8 @@ Int_t MPDGEMPlane::ReadDatabase( const TDatime& date ){
         { "adc.min",        &fMinAmpl,        kDouble,  0, 1, gbl },
         { "split.frac",     &fSplitFrac,      kDouble,  0, 1, gbl },
         { "mapping",        &mapping,         kTString, 0, 1, gbl },
+        { "do_noise",       &do_noise,        kInt,     0, 1, gbl },
+
 
         {}
     };
@@ -108,6 +111,9 @@ Int_t MPDGEMPlane::ReadDatabase( const TDatime& date ){
     if( err ) return err;
 
     fclose(file);
+
+    SetBit( kDoNoise, do_noise );
+
 
     UInt_t nentry = fChanMapData.size()/MPDMAP_ROW_SIZE;
     for( UInt_t mapline = 0; mapline < nentry; mapline++ ){
@@ -151,34 +157,32 @@ Int_t MPDGEMPlane::ReadDatabase( const TDatime& date ){
 //    fcommon_mode = new Int_t[N_APV25_CHAN*nentry];
 
     fPed.clear();
+    fPed.resize(fNelem, 0.0);
+
     fRMS.clear();
+    fRMS.resize(fNelem, 0.0);
 
     for( UInt_t i = 0; i < rawped.size(); i++ ){
         if( (i % 2) == 1 ) continue;
         UInt_t idx = (UInt_t) rawped[i];
 	
-    	if( idx < (UInt_t) fNelem && fPed.size() == idx ){
-    		fPed.push_back(rawped[i+1]);
+    	if( idx < (UInt_t) fNelem ){
+    		fPed[idx] = rawped[i+1];
     	} else {
 		
     	    std::cout << "[MPDGEMPlane::ReadDatabase]  WARNING: " << " strip " << idx  << " listed but not enough strips in cratemap" << std::endl;
     	}
     }
-    for( UInt_t i = 0; i < fNelem-rawped.size(); i++ ){
-        fPed.push_back(0);
-    }
 
     for( UInt_t i = 0; i < rawrms.size(); i++ ){
         if( (i % 2) == 1 ) continue;
         UInt_t idx = (UInt_t) rawrms[i];
-	if( idx < ((UInt_t) fNelem) && fRMS.size() == idx ){
-		fRMS.push_back(rawrms[i+1]);
+
+	if( idx < ((UInt_t) fNelem) ){
+		fRMS[idx] = rawrms[i+1];
 	} else {
 	    std::cout << "[MPDGEMPlane::ReadDatabase]  WARNING: " << " strip " << idx  << " listed but not enough strips in cratemap" << std::endl;
 	}
-    }
-    for( UInt_t i = 0; i < fNelem-rawrms.size(); i++ ){
-        fRMS.push_back(0);
     }
 
     fADCraw = new Float_t[fNelem];
@@ -346,7 +350,7 @@ Int_t MPDGEMPlane::Decode( const THaEvData& evdata ){
 
 
                 // Zero suppression
-                if( !fZeroSuppress ||  
+                if( !fZeroSuppress  ||  
                        ( fRMS[RstripPos] > 0.0 && fabs(fADCForm[2][fNch])/fRMS[RstripPos] > fZeroSuppressRMS) ){
                     fSigStrips.push_back(RstripPos);
                     fNch++;
@@ -376,20 +380,24 @@ Int_t MPDGEMPlane::Decode( const THaEvData& evdata ){
 	      cm_noise += arrADCSum[strip];
 	    }
 	    cm_noise = cm_noise/ n_cmn / fMaxSamp; // averaged to each sample
-            fDnoise = cm_noise;
+
+            fDnoise = 0.0;
+            if( TestBit(kDoNoise) ){
+                fDnoise = cm_noise;
+            }
 
             // Correct superclass' variables for common mode noise
 	    for(Int_t strip=0; strip<N_APV25_CHAN;++strip){
                 UInt_t RstripPos = GetRStripNumber( strip, it->pos, it->invert );
-                fADCcor[RstripPos] -= fPed[RstripPos] + cm_noise;
+                fADCcor[RstripPos] -= fPed[RstripPos] + fDnoise;
 	    }
 
             // Correct this class' variables for common mode noise
 	    for(Int_t ch= fNchStartOfAPV; ch < fNch; ch++){
                 for( UInt_t adc_samp = 0; adc_samp < fMaxSamp; adc_samp++ ){
-                    fADCForm[adc_samp][ch] -= cm_noise;
+                    fADCForm[adc_samp][ch] -= fDnoise;
                 }
-                fADCSum[fNch] -= cm_noise*fMaxSamp;
+                fADCSum[fNch] -= fDnoise*fMaxSamp;
             }
 
         }// End ichan loop: fNchan = total APVs 
@@ -401,8 +409,7 @@ Int_t MPDGEMPlane::Decode( const THaEvData& evdata ){
 
 //    std::cout << fName << " channels found  " << fNch << std::endl;
 
-    return 0;
-//    return FindGEMHits();
+    return FindGEMHits();
 }
 
 Int_t MPDGEMPlane::GetRStripNumber( UInt_t strip, UInt_t pos, UInt_t invert ){
@@ -484,6 +491,8 @@ Int_t MPDGEMPlane::FindGEMHits(){
             EStep step = kFindMax;
             while( step != kDone and it != next ) {
                 Double_t adc = fADCcor[*it];
+                if( adc < 0.0 ) continue;
+
                 switch( step ) {
                     case kFindMax:
                         // Looking for maximum
@@ -498,7 +507,7 @@ Int_t MPDGEMPlane::FindGEMHits(){
                         break;
                     case kFindMin:
                         // Looking for minimum
-                        if( adc < minadc ) {
+                        if(  adc < minadc ) {
                             minpos = it;
                             minadc = adc;
                         } else if( adc > minadc * frac_up ) {
