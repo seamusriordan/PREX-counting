@@ -40,6 +40,9 @@ class MPDGEMPlane : public TreeSearch::GEMPlane {
         MPDGEMPlane( const char *name, const char *description = "",
                 THaDetectorBase* parent = 0 );
 
+        MPDGEMPlane():
+            fADC0(0), fADC1(0), fADC2(0), fADC3(0), fADC4(0), fADC5(0), fADCSum(0) {}
+
         virtual ~MPDGEMPlane();
 
         virtual void    Clear( Option_t* opt="" );
@@ -51,7 +54,7 @@ class MPDGEMPlane : public TreeSearch::GEMPlane {
         virtual Int_t   Begin( THaRunBase* r=0 );
         virtual Int_t   End( THaRunBase* r=0 );
 
-    private:
+    protected:
         std::vector<mpdmap_t>    fMPDmap;
         std::vector<Int_t>       fChanMapData;
 
@@ -59,7 +62,7 @@ class MPDGEMPlane : public TreeSearch::GEMPlane {
         Bool_t fZeroSuppress;
 
         // Output variables
-//        Int_t  fNch;   // duplicated by fSigStrips.size()
+        Int_t  fNch;   // duplicated by fSigStrips.size()
 //        Int_t *fStrip; // [fNch]  // duplicated by fSigStrips
         Int_t *fADCForm[N_MPD_TIME_SAMP]; 
         // Being obnoxious so we match the stand alone more closely
@@ -69,7 +72,7 @@ class MPDGEMPlane : public TreeSearch::GEMPlane {
         Int_t *fADC3; // [fNch]
         Int_t *fADC4; // [fNch]
         Int_t *fADC5; // [fNch]
-	Int_t *fADCSum; //[fNch] // copy of fADC organized by signal
+	Float_t *fADCSum; //[fNch] // copy of fADC organized by signal
 //        Double_t *fPedestal;  // Duplicated by fPedestal
 //  	Int_t *fcommon_mode; //[fNch] // Duplicated by fDnoise
         Vflt_t fRMS;
