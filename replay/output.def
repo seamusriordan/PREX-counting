@@ -1,3 +1,85 @@
-block sbs.hcal.a.*
-block sbs.hcal.a_p.*
-block sbs.hcal.a_c.*
+# block sbs.gems.*
+block prex.tr.*
+block prex.gems.*
+block prex.gems.[xy][1234].adc*
+block prex.gems.[xy][1234].trigger_time
+block prex.gems.[xy][1234].ev_num
+block prex.gems.[xy][1234].nhits
+block prex.gems.[xy][1234].hit.*
+block prex.gems.[xy][1234].strip.*
+block prex.gems.[xy][1234].coord.*
+block prex.gems.[xy].nroads
+block prex.gems.[xy].ngood
+block prex.gems.[xy].rd.*
+block prex.sbuscint.hadc0
+block prex.sbuscint.hadc1
+block prex.sbuscint.hadc2
+block prex.sbuscint.ladc0
+block prex.sbuscint.ladc1
+block prex.sbuscint.ladc2
+# variablesbs.sbuscint.hadc0
+# variablesbs.sbuscint.hadc1
+# variablesbs.sbuscint.hadc2
+# variablesbs.sbuscint.hadc3
+# variablesbs.sbuscint.hadc4
+# variablesbs.sbuscint.hadc5
+# variablesbs.sbuscint.hadc6
+# variablesbs.sbuscint.hadc7
+# variablesbs.sbuscint.hadc8
+# variablesbs.sbuscint.hadc9
+# variablesbs.sbuscint.hadc10
+# variablesbs.sbuscint.hadc11
+# variablesbs.sbuscint.hadc12
+# variablesbs.sbuscint.hadc13
+# variablesbs.sbuscint.hadc14
+# variablesbs.sbuscint.hadc15
+
+# variablesbs.sbuscint.ladc0
+# variablesbs.sbuscint.ladc1
+# variablesbs.sbuscint.ladc2
+# variablesbs.sbuscint.ladc3
+# variablesbs.sbuscint.ladc4
+# variablesbs.sbuscint.ladc5
+# variablesbs.sbuscint.ladc6
+# variablesbs.sbuscint.ladc7
+# variablesbs.sbuscint.ladc8
+# variablesbs.sbuscint.ladc9
+# variablesbs.sbuscint.ladc10
+# variablesbs.sbuscint.ladc11
+# variablesbs.sbuscint.ladc12
+# variablesbs.sbuscint.ladc13
+# variablesbs.sbuscint.ladc14
+# variablesbs.sbuscint.ladc15
+
+# TH1F hadc0 'hadc0 Histogram' sbs.sbuscint.hadc0 100 0 4095
+# TH1F hadc1 'hadc1 Histogram' sbs.sbuscint.hadc1 100 0 4095
+# TH1F hadc2 'hadc2 Histogram' sbs.sbuscint.hadc2 100 0 4095
+# TH1F hadc3 'hadc3 Histogram' sbs.sbuscint.hadc3 100 0 4095
+# TH1F hadc4 'hadc4 Histogram' sbs.sbuscint.hadc4 100 0 4095
+# TH1F hadc5 'hadc5 Histogram' sbs.sbuscint.hadc5 100 0 4095
+# TH1F hadc6 'hadc6 Histogram' sbs.sbuscint.hadc6 100 0 4095
+# TH1F hadc7 'hadc7 Histogram' sbs.sbuscint.hadc7 100 0 4095
+# TH1F hadc8 'hadc8 Histogram' sbs.sbuscint.hadc8 100 0 4095
+# TH1F hadc9 'hadc9 Histogram' sbs.sbuscint.hadc9 100 0 4095
+# TH1F hadc10 'hadc10 Histogram' sbs.sbuscint.hadc10 100 0 4095
+# TH1F hadc11 'hadc11 Histogram' sbs.sbuscint.hadc11 100 0 4095
+# TH1F hadc12 'hadc12 Histogram' sbs.sbuscint.hadc12 100 0 4095
+# TH1F hadc13 'hadc13 Histogram' sbs.sbuscint.hadc13 100 0 4095
+# TH1F hadc14 'hadc14 Histogram' sbs.sbuscint.hadc14 100 0 4095
+# TH1F hadc15 'hadc15 Histogram' sbs.sbuscint.hadc15 100 0 4095
+# TH1F ladc0 'ladc0 Histogram' sbs.sbuscint.ladc0 100 0 4095
+# TH1F ladc1 'ladc1 Histogram' sbs.sbuscint.ladc1 100 0 4095
+# TH1F ladc2 'ladc2 Histogram' sbs.sbuscint.ladc2 100 0 4095
+# TH1F ladc3 'ladc3 Histogram' sbs.sbuscint.ladc3 100 0 4095
+# TH1F ladc4 'ladc4 Histogram' sbs.sbuscint.ladc4 100 0 4095
+# TH1F ladc5 'ladc5 Histogram' sbs.sbuscint.ladc5 100 0 4095
+# TH1F ladc6 'ladc6 Histogram' sbs.sbuscint.ladc6 100 0 4095
+# TH1F ladc7 'ladc7 Histogram' sbs.sbuscint.ladc7 100 0 4095
+# TH1F ladc8 'ladc8 Histogram' sbs.sbuscint.ladc8 100 0 4095
+# TH1F ladc9 'ladc9 Histogram' sbs.sbuscint.ladc9 100 0 4095
+# TH1F ladc10 'ladc10 Histogram' sbs.sbuscint.ladc10 100 0 4095
+# TH1F ladc11 'ladc11 Histogram' sbs.sbuscint.ladc11 100 0 4095
+# TH1F ladc12 'ladc12 Histogram' sbs.sbuscint.ladc12 100 0 4095
+# TH1F ladc13 'ladc13 Histogram' sbs.sbuscint.ladc13 100 0 4095
+# TH1F ladc14 'ladc14 Histogram' sbs.sbuscint.ladc14 100 0 4095
+# TH1F ladc15 'ladc15 Histogram' sbs.sbuscint.ladc15 100 0 4095
