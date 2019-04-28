@@ -1,5 +1,5 @@
 # PREX-counting
-Reconstruction and analysis code for PREX counting mode
+Reconstruction code for PREX GEMs in counting mode
 
 This code is is built against the TreeSearch library at $TREESEARCH
 
