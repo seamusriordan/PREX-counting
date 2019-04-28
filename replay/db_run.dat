@@ -1,13 +1,1 @@
-# Sample run database
---------[ 2017-07-26 17:50:14 ]
-
-ebeam = 1.068
-
-prex.theta = 5
-prex.pcentral = -1
-prex.phi = 0
-prex.colldist = 1.0
-prex.off_x = 0
-prex.off_y = 0
-prex.off_z = 0
-
+../DB/db_run.dat
