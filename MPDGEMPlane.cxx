@@ -199,7 +199,7 @@ Int_t MPDGEMPlane::ReadDatabase( const TDatime& date ){
     fSigStrips.reserve(fNelem);
     fStripsSeen.resize(fNelem);
 
-
+    fIsInit = true;
     return 0;
 }
 
