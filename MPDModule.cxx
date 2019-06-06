@@ -80,6 +80,9 @@ namespace Decoder {
 
           mpdID = (thesewords & 0x1F0000) >> 16;
 
+          // FIXME:  This is not robust
+          if( mpdID == 0 ) continue;
+
           int nevent = (thesewords & 0x00FF00) >> 8;
 
           for( ii = 0; ii < nevent; ii++ ){
