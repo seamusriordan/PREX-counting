@@ -241,7 +241,7 @@ Int_t MPDGEMPlane::DefineVariables( EMode mode ) {
           { "strip.good",     "Good pulse shape on strip",        "fGoodHit" },
           { "strip.number", "Strip number mapping", "fSigStrips" },
           { "nch", "Number of channels", "fNch" },
-          { "strip_number", "Strip Number", "fStrips" },
+          { "strip_number", "Strip Number", "fStrip" },
           { "adc0", "ADC sample", "fADC0" },
           { "adc1", "ADC sample", "fADC1" },
           { "adc2", "ADC sample", "fADC2" },
@@ -307,12 +307,12 @@ Int_t MPDGEMPlane::Decode( const THaEvData& evdata ){
 
     fNch = 0;
     for (std::vector<mpdmap_t>::iterator it = fMPDmap.begin() ; it != fMPDmap.end(); ++it){
-        int tester=0;
+        //int tester=0;
         // Find channel for trigger time first
         Int_t effChan = it->mpd_id << 5 ;  // Channel reserved for trigger time
-	std::cout<<"test "<<tester++<<"  "<<__func__<<std::endl;
+	//std::cout<<"test "<<tester++<<"  "<<__func__<<std::endl;
 	ULong_t coarse_time1 = evdata.GetData(it->crate,it->slot,effChan,0);
-	std::cout<<"test "<<tester++<<"  "<<__func__<<std::endl;
+	//std::cout<<"test "<<tester++<<"  "<<__func__<<std::endl;
 	UInt_t coarse_time2 = evdata.GetData(it->crate,it->slot,effChan,1);
 	UInt_t fine_time = evdata.GetData(it->crate,it->slot,effChan,2);
 	trigger_time = ((coarse_time1<<20)|coarse_time2)+fine_time/6.0;
