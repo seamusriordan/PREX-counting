@@ -73,6 +73,10 @@ namespace Decoder {
           // printf("EVENT_PER_BLOCK %d\n", (thesewords & 0x00FF00) >> 8 );
           // printf("BLOCK COUNT     %d\n", (thesewords & 0x0000FF) >> 0);
 
+          if( (thesewords & 0xe00000) == 8388608 ) continue; //hack to avoid interpreating one word APV data
+	  						     //inserting into the datastream (due to firmware issue with
+							     //FastReadout = 5) as BLOCK HEADER. This number changes event to event. 
+
           if( (thesewords & 0xe00000) >> 21 != 0 ){
               fprintf(stderr, "[ERROR  MPDModule::LoadSlot, line %d] BLOCK HEADER NOT FOUND\n", __LINE__);
               return -1;
@@ -80,7 +84,7 @@ namespace Decoder {
 
           mpdID = (thesewords & 0x1F0000) >> 16;
 
-          // FIXME:  This is not robust
+          // FIXME:  This is not robust - This happens due to filler word (presently 0) into the data stream during data transfer
           if( mpdID == 0 ) continue;
 
           int nevent = (thesewords & 0x00FF00) >> 8;
