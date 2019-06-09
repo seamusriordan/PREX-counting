@@ -74,9 +74,16 @@ class MPDGEMPlane : public TreeSearch::GEMPlane {
         Int_t *fADC4; // [fNch]
         Int_t *fADC5; // [fNch]
 	Float_t *fADCSum; //[fNch] // copy of fADC organized by signal
-//        Double_t *fPedestal;  // Duplicated by fPedestal
-//  	Int_t *fcommon_mode; //[fNch] // Duplicated by fDnoise
-        Vflt_t fRMS;
+        
+	Int_t *frawADC[N_MPD_TIME_SAMP];//for raw sample 
+        Int_t *frADC0; // [fNch] /raw - without ped subtracted
+        Int_t *frADC1; // [fNch]
+        Int_t *frADC2; // [fNch]
+        Int_t *frADC3; // [fNch]
+        Int_t *frADC4; // [fNch]
+        Int_t *frADC5; // [fNch]
+         
+	Vflt_t fRMS;
         Double_t trigger_time;
         Int_t ev_num;
 

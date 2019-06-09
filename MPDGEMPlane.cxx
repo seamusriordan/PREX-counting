@@ -15,6 +15,7 @@ MPDGEMPlane::MPDGEMPlane( const char *name, const char *description,
 //    fNch(0),fStrip(NULL),fPedestal(NULL),fcommon_mode(NULL),
     fDefaultRMS(50.0), fNch(0), fStrip(0), 
     fADC0(0), fADC1(0), fADC2(0), fADC3(0), fADC4(0), fADC5(0), fADCSum(0),
+    frADC0(0), frADC1(0), frADC2(0), frADC3(0), frADC4(0), frADC5(0),
     trigger_time(-1),ev_num(-1)
 
 {
@@ -25,6 +26,7 @@ MPDGEMPlane::MPDGEMPlane( const char *name, const char *description,
 
     for( UInt_t i = 0; i < fMaxSamp; i++ ){
       fADCForm[i] = NULL;
+      frawADC[i] = NULL;
     }
 
 
@@ -40,9 +42,19 @@ MPDGEMPlane::~MPDGEMPlane() {
         fADC4 = NULL;
         fADC5 = NULL;
 	fADCSum = NULL;
+        
+	frADC0 = NULL;
+        frADC1 = NULL;
+        frADC2 = NULL;
+        frADC3 = NULL;
+        frADC4 = NULL;
+        frADC5 = NULL;
         for( UInt_t i = 0; i < fMaxSamp; i++ ){
             delete fADCForm[i];
             fADCForm[i] = NULL;
+            
+	    delete frawADC[i];
+            frawADC[i] = NULL;
         }
         delete fStrip;
         fStrip = NULL;
@@ -143,8 +155,10 @@ Int_t MPDGEMPlane::ReadDatabase( const TDatime& date ){
 
     for( UInt_t i = 0; i < fMaxSamp; i++ ){
         fADCForm[i] = new Int_t [fNelem];
+        frawADC[i] = new Int_t [fNelem];
         for( UInt_t j = 0; j < fMaxSamp; j++ ){
             fADCForm[i][j] = 0.0;
+            frawADC[i][j] = 0.0;
         }
     }
     fADC0 = fADCForm[0];
@@ -153,6 +167,13 @@ Int_t MPDGEMPlane::ReadDatabase( const TDatime& date ){
     fADC3 = fADCForm[3];
     fADC4 = fADCForm[4];
     fADC5 = fADCForm[5];
+
+    frADC0 = frawADC[0];
+    frADC1 = frawADC[1];
+    frADC2 = frawADC[2];
+    frADC3 = frawADC[3];
+    frADC4 = frawADC[4];
+    frADC5 = frawADC[5];
 
     fADCSum = new Float_t[fNelem];
     fStrip  = new Int_t[fNelem];
@@ -220,13 +241,19 @@ Int_t MPDGEMPlane::DefineVariables( EMode mode ) {
           { "strip.good",     "Good pulse shape on strip",        "fGoodHit" },
           { "strip.number", "Strip number mapping", "fSigStrips" },
           { "nch", "Number of channels", "fNch" },
-          { "strip_number", "Strip Number", "fStrips" },
+          { "strip_number", "Strip Number", "fStrip" },
           { "adc0", "ADC sample", "fADC0" },
           { "adc1", "ADC sample", "fADC1" },
           { "adc2", "ADC sample", "fADC2" },
           { "adc3", "ADC sample", "fADC3" },
           { "adc4", "ADC sample", "fADC4" },
           { "adc5", "ADC sample", "fADC5" },
+          { "radc0", "raw ADC sample", "frADC0" },
+          { "radc1", "raw ADC sample", "frADC1" },
+          { "radc2", "raw ADC sample", "frADC2" },
+          { "radc3", "raw ADC sample", "frADC3" },
+          { "radc4", "raw ADC sample", "frADC4" },
+          { "radc5", "raw ADC sample", "frADC5" },
           { "adc_sum", "ADC samples sum", "fADCSum" },
           { "nhits",          "Num hits (clusters of strips)",    "GetNhits()" },
           { "noise",          "Noise level (avg below adc.min)",  "fDnoise" },
@@ -280,9 +307,8 @@ Int_t MPDGEMPlane::Decode( const THaEvData& evdata ){
 
     fNch = 0;
     for (std::vector<mpdmap_t>::iterator it = fMPDmap.begin() ; it != fMPDmap.end(); ++it){
-
         // Find channel for trigger time first
-      Int_t effChan = it->mpd_id << 5 ;  // Channel reserved for trigger time
+        Int_t effChan = it->mpd_id << 5 ;  // Channel reserved for trigger time
 	ULong_t coarse_time1 = evdata.GetData(it->crate,it->slot,effChan,0);
 	UInt_t coarse_time2 = evdata.GetData(it->crate,it->slot,effChan,1);
 	UInt_t fine_time = evdata.GetData(it->crate,it->slot,effChan,2);
@@ -333,6 +359,7 @@ Int_t MPDGEMPlane::Decode( const THaEvData& evdata ){
                     assert(isamp < nsamp);
 
                     Int_t rawadc =  evdata.GetData(it->crate, it->slot, chan, isamp);
+                    frawADC[adc_samp][fNch] = rawadc;
                     fADCForm[adc_samp][fNch] = rawadc - fPed[RstripPos];
 		    fADCSum[fNch] += fADCForm[adc_samp][fNch];
                     assert( fNch < fNelem ); 
